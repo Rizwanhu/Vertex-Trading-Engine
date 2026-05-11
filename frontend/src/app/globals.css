@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --scrollbar-track: #0a0e1a;
+  --scrollbar-thumb: #1e2d4a;
+  --scrollbar-thumb-hover: #3b82f6;
+}
+
+html, body {
+  background-color: #0a0e1a;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* ─── Utility Classes ─── */
+@layer components {
+  .card {
+    @apply bg-bg-card border border-bg-border rounded-xl shadow-card;
+  }
+  .card-elevated {
+    @apply bg-bg-elevated border border-bg-border rounded-xl shadow-card;
+  }
+  .btn-primary {
+    @apply bg-brand hover:bg-brand-dark text-white font-medium px-4 py-2 rounded-lg
+           transition-all duration-200 hover:shadow-glow active:scale-95;
+  }
+  .btn-buy {
+    @apply bg-gradient-green text-white font-semibold px-6 py-3 rounded-lg w-full
+           transition-all duration-200 hover:shadow-green active:scale-95;
+  }
+  .btn-sell {
+    @apply bg-gradient-red text-white font-semibold px-6 py-3 rounded-lg w-full
+           transition-all duration-200 hover:shadow-red active:scale-95;
+  }
+  .input-field {
+    @apply w-full bg-bg-secondary border border-bg-border rounded-lg px-3 py-2.5
+           text-text-primary placeholder-text-muted
+           focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30
+           transition-all duration-200 text-sm;
+  }
+  .badge-green {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+           bg-green-trade/20 text-green-trade;
+  }
+  .badge-red {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+           bg-red-trade/20 text-red-trade;
+  }
+  .badge-yellow {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+           bg-yellow-500/20 text-yellow-400;
+  }
+  .stat-card {
+    @apply card p-4 flex flex-col gap-1 hover:border-brand/40 transition-colors duration-200;
+  }
+  .price-up   { @apply text-green-trade font-mono; }
+  .price-down { @apply text-red-trade font-mono; }
+  .price-flat { @apply text-text-secondary font-mono; }
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary
+           hover:text-text-primary hover:bg-bg-elevated cursor-pointer
+           transition-all duration-200 text-sm font-medium;
+  }
+  .sidebar-item-active {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand bg-brand-glow
+           cursor-pointer transition-all duration-200 text-sm font-medium;
+  }
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+  }
+}
+
+/* ─── Number Ticker Animation ─── */
+.ticker-up   { color: #10b981; }
+.ticker-down { color: #ef4444; }
+
+/* ─── TradingView Chart Dark Theme Override ─── */
+.tv-chart-container {
+  border-radius: 12px;
+  overflow: hidden;
+}
