@@ -3,8 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, TrendingUp, Bot, BarChart3,
-  Settings, ChevronLeft, ChevronRight, Zap, Wallet
+  Settings, ChevronLeft, ChevronRight, Zap, Wallet, LogOut
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { clearTokens } from "@/lib/api";
 import { clsx } from "clsx";
 
 const navItems = [
@@ -23,6 +25,12 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    clearTokens();
+    router.push("/login");
+  };
 
   return (
     <aside
@@ -71,8 +79,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
-      {/* Toggle Button */}
-      <div className="px-2 py-4 border-t border-bg-border">
+      <div className="px-2 py-4 border-t border-bg-border space-y-1">
+        <button
+          onClick={handleLogout}
+          title="Log out"
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-red-trade hover:bg-red-trade/10 transition-all"
+        >
+          <LogOut size={18} className="shrink-0" />
+          {!collapsed && <span>Log out</span>}
+        </button>
         <button
           onClick={onToggle}
           className="flex items-center justify-center w-full py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-all duration-200"

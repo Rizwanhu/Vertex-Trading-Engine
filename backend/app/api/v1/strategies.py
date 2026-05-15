@@ -97,24 +97,35 @@ async def run_backtest(
     if not strategy:
         raise HTTPException(status_code=404, detail="Strategy not found")
 
-    # TODO: Run actual backtest via Celery task
-    # Placeholder result
+    # Persist a BacktestResult record immediately, then run the actual backtest async
     bt = BacktestResult(
         strategy_id=strategy_id,
-        symbol=body.symbol,
+        symbol=body.symbol.upper(),
         timeframe=body.timeframe,
         start_date=body.start_date,
         end_date=body.end_date,
-        total_trades=42,
-        win_rate=58.3,
-        total_return=14.7,
-        sharpe_ratio=1.45,
-        max_drawdown=-8.2,
+        total_trades=0,
+        win_rate=0.0,
+        total_return=0.0,
+        sharpe_ratio=0.0,
+        max_drawdown=0.0,
         equity_curve=[],
     )
     db.add(bt)
     await db.flush()
     await db.refresh(bt)
+
+    # Queue the real computation in Celery
+    from app.workers.tasks import run_backtest
+    run_backtest.delay(
+        backtest_result_id=bt.id,
+        strategy_id=strategy_id,
+        symbol=body.symbol.upper(),
+        timeframe=body.timeframe,
+        start_ts=body.start_date.timestamp(),
+        end_ts=body.end_date.timestamp(),
+    )
+
     return bt
 
 

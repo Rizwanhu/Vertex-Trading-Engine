@@ -75,7 +75,7 @@ async def place_order(
     await db.refresh(order)
 
     # Queue execution via Celery
-    execute_order_task.delay(order.id)
+    execute_order_task(order.id)
 
     return order
 

@@ -1,6 +1,7 @@
 "use client";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useState } from "react";
 
 export default function DashboardLayout({
@@ -22,7 +23,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <TopBar />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {children}
+          <AuthGuard>{children}</AuthGuard>
         </main>
       </div>
     </div>

@@ -34,7 +34,7 @@ export default function TradePage() {
 
         {/* Trade Panel */}
         <div className="w-full lg:w-80 shrink-0">
-          <TradePanel symbol="BTCUSDT" currentPrice={67420.5} />
+          <TradePanel symbol="BTCUSDT" broker="binance" />
         </div>
       </div>
 

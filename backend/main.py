@@ -5,7 +5,7 @@ import asyncio
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1 import auth, market, orders, portfolio, strategies, bots
+from app.api.v1 import auth, market, orders, portfolio, strategies, bots, ws
 from app.workers.celery_app import celery_app  # noqa: F401
 from app.services.websocket import binance_ws
 
@@ -52,6 +52,7 @@ app.include_router(orders.router,     prefix="/api/orders",     tags=["Orders"])
 app.include_router(portfolio.router,  prefix="/api/portfolio",  tags=["Portfolio"])
 app.include_router(strategies.router, prefix="/api/strategies", tags=["Strategies"])
 app.include_router(bots.router,       prefix="/api/bots",       tags=["Bots"])
+app.include_router(ws.router,         prefix="/api/ws",          tags=["WebSocket"])
 
 
 @app.get("/health")
