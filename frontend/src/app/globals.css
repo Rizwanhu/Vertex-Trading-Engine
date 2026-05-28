@@ -1,97 +1,193 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base Reset ─── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --scrollbar-track: #0a0e1a;
-  --scrollbar-thumb: #1e2d4a;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --scrollbar-track: #04060d;
+  --scrollbar-thumb: #1e293b;
   --scrollbar-thumb-hover: #3b82f6;
+  --glow-brand: rgba(59, 130, 246, 0.4);
+  --glow-green: rgba(16, 185, 129, 0.4);
+  --border-glow: rgba(59, 130, 246, 0.25);
 }
 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 html, body {
-  background-color: #0a0e1a;
-  color: #e2e8f0;
-  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #04060d;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   height: 100%;
 }
 
-/* ─── Custom Scrollbar ─── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
-/* ─── Utility Classes ─── */
 @layer components {
-  .card {
-    @apply bg-bg-card border border-bg-border rounded-xl shadow-card;
+  .ambient-bg {
+    @apply fixed inset-0 pointer-events-none -z-10;
+    background-image: theme(backgroundImage.mesh);
+    background-color: #04060d;
   }
-  .card-elevated {
-    @apply bg-bg-elevated border border-bg-border rounded-xl shadow-card;
+  .ambient-grid {
+    @apply fixed inset-0 pointer-events-none -z-10 opacity-30;
+    background-image: theme(backgroundImage.grid-pattern);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% -10%, black 20%, transparent 70%);
   }
+
+  .glass-panel {
+    @apply relative overflow-hidden rounded-2xl;
+    background: linear-gradient(160deg, rgba(22, 30, 50, 0.92) 0%, rgba(10, 14, 26, 0.96) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+      0 8px 40px rgba(0, 0, 0, 0.45),
+      0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    backdrop-filter: blur(16px);
+  }
+
+  .glass-panel-glow {
+    @apply glass-panel;
+    box-shadow:
+      0 0 0 1px rgba(59, 130, 246, 0.12) inset,
+      0 0 60px rgba(59, 130, 246, 0.08),
+      0 8px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .card { @apply glass-panel; }
+  .card-elevated { @apply glass-panel-glow; }
+
+  .bento-card {
+    @apply glass-panel p-5 sm:p-6 transition-all duration-300;
+  }
+  .bento-card:hover {
+    border-color: rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.06), 0 8px 40px rgba(0, 0, 0, 0.45);
+  }
+
   .btn-primary {
-    @apply bg-brand hover:bg-brand-dark text-white font-medium px-4 py-2 rounded-lg
-           transition-all duration-200 hover:shadow-glow active:scale-95;
+    @apply relative overflow-hidden font-semibold text-white px-5 py-2.5 rounded-xl
+           bg-gradient-brand transition-all duration-300
+           hover:brightness-110 hover:shadow-[0_0_48px_rgba(59,130,246,0.45)]
+           active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-ghost {
+    @apply font-semibold px-4 py-2.5 rounded-xl border border-white/[0.08]
+           text-text-secondary hover:text-text-primary hover:bg-white/[0.04]
+           hover:border-white/[0.12] transition-all duration-200;
   }
   .btn-buy {
-    @apply bg-gradient-green text-white font-semibold px-6 py-3 rounded-lg w-full
-           transition-all duration-200 hover:shadow-green active:scale-95;
+    @apply bg-gradient-green text-white font-bold px-6 py-3.5 rounded-xl w-full
+           shadow-[0_4px_24px_rgba(16,185,129,0.3)] transition-all duration-300
+           hover:brightness-110 hover:shadow-[0_4px_32px_rgba(16,185,129,0.45)] active:scale-[0.98] disabled:opacity-50;
   }
   .btn-sell {
-    @apply bg-gradient-red text-white font-semibold px-6 py-3 rounded-lg w-full
-           transition-all duration-200 hover:shadow-red active:scale-95;
+    @apply bg-gradient-red text-white font-bold px-6 py-3.5 rounded-xl w-full
+           shadow-[0_4px_24px_rgba(239,68,68,0.3)] transition-all duration-300
+           hover:brightness-110 hover:shadow-[0_4px_32px_rgba(239,68,68,0.45)] active:scale-[0.98] disabled:opacity-50;
   }
+
   .input-field {
-    @apply w-full bg-bg-secondary border border-bg-border rounded-lg px-3 py-2.5
-           text-text-primary placeholder-text-muted
-           focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30
+    @apply w-full bg-black/30 border border-white/[0.08] rounded-xl px-4 py-3
+           text-text-primary placeholder-text-muted font-medium
+           focus:outline-none focus:border-brand/50 focus:ring-2 focus:ring-brand/15
            transition-all duration-200 text-sm;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
+
   .badge-green {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-           bg-green-trade/20 text-green-trade;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider
+           bg-green-trade/12 text-green-trade border border-green-trade/25;
   }
   .badge-red {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-           bg-red-trade/20 text-red-trade;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider
+           bg-red-trade/12 text-red-trade border border-red-trade/25;
   }
-  .badge-yellow {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-           bg-yellow-500/20 text-yellow-400;
-  }
+
   .stat-card {
-    @apply card p-4 flex flex-col gap-1 hover:border-brand/40 transition-colors duration-200;
+    @apply glass-panel p-5 sm:p-6 flex flex-col gap-2 group relative overflow-hidden;
   }
-  .price-up   { @apply text-green-trade font-mono; }
-  .price-down { @apply text-red-trade font-mono; }
-  .price-flat { @apply text-text-secondary font-mono; }
-  .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary
-           hover:text-text-primary hover:bg-bg-elevated cursor-pointer
-           transition-all duration-200 text-sm font-medium;
+  .stat-card::after {
+    content: '';
+    @apply absolute -bottom-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none;
+    background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
   }
-  .sidebar-item-active {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand bg-brand-glow
-           cursor-pointer transition-all duration-200 text-sm font-medium;
+  .stat-card:hover { border-color: rgba(59, 130, 246, 0.22); }
+
+  .page-container {
+    @apply flex flex-col gap-6 sm:gap-8 w-full max-w-[1720px] mx-auto animate-slide-up pb-4;
   }
-  .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+
+  .section-title {
+    @apply font-display text-sm font-semibold text-text-primary flex items-center gap-2 tracking-tight;
   }
+
+  .text-gradient { @apply bg-gradient-brand bg-clip-text text-transparent; }
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-green-trade;
+    box-shadow: 0 0 10px var(--glow-green);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .nav-glow {
+    box-shadow: inset 3px 0 0 #3b82f6, 0 0 30px rgba(59, 130, 246, 0.1);
+  }
+
+  .pill-tabs {
+    @apply flex p-1 rounded-xl bg-black/40 border border-white/[0.06];
+  }
+  .pill-tab {
+    @apply flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-200 text-text-muted;
+  }
+  .pill-tab-active {
+    @apply bg-gradient-brand text-white shadow-[0_4px_20px_rgba(59,130,246,0.35)];
+  }
+
+  .hero-banner {
+    @apply relative overflow-hidden rounded-2xl p-6 sm:p-8;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(139,92,246,0.08) 50%, transparent 100%);
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    box-shadow: 0 0 80px rgba(59, 130, 246, 0.06);
+  }
+  .hero-banner::before {
+    content: '';
+    @apply absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none;
+    background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+    transform: translate(30%, -40%);
+  }
+
+  .auth-showcase-bar {
+    @apply rounded-sm origin-bottom;
+    background: linear-gradient(to top, rgba(59,130,246,0.6), rgba(59,130,246,0.15));
+    animation: barPulse 3s ease-in-out infinite;
+  }
+
+  .metric-ring-track { stroke: rgba(255,255,255,0.06); }
+  .table-scroll { @apply overflow-x-auto; }
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 }
 
-/* ─── Number Ticker Animation ─── */
-.ticker-up   { color: #10b981; }
-.ticker-down { color: #ef4444; }
+@keyframes barPulse {
+  0%, 100% { opacity: 0.6; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.08); }
+}
 
-/* ─── TradingView Chart Dark Theme Override ─── */
 .tv-chart-container {
-  border-radius: 12px;
+  border-radius: 0 0 16px 16px;
   overflow: hidden;
+  min-height: 320px;
+}
+
+@media (max-width: 1023px) {
+  .tv-chart-container { min-height: 360px; }
 }

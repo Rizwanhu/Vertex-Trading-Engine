@@ -16,6 +16,7 @@ interface TradingChartProps {
   symbol?: string;
   timeframe?: string;
   data?: CandleData[];
+  className?: string;
 }
 
 function generateMockCandles(count = 150): CandleData[] {
@@ -45,7 +46,10 @@ function generateMockCandles(count = 150): CandleData[] {
 
 function normalizeCandles(raw: Candle[]): CandleData[] {
   return raw.map((c) => ({
-    time: typeof c.time === "number" ? c.time : Math.floor(new Date(c.time as unknown as string).getTime() / 1000),
+    time:
+      typeof c.time === "number"
+        ? c.time
+        : Math.floor(new Date(c.time as unknown as string).getTime() / 1000),
     open: c.open,
     high: c.high,
     low: c.low,
@@ -54,9 +58,16 @@ function normalizeCandles(raw: Candle[]): CandleData[] {
   }));
 }
 
-export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: TradingChartProps) {
+export function TradingChart({
+  symbol = "BTCUSDT",
+  timeframe = "1h",
+  data,
+  className,
+}: TradingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
-  const chartInst = useRef<ReturnType<typeof import("lightweight-charts")["createChart"]> | null>(null);
+  const chartInst = useRef<ReturnType<
+    typeof import("lightweight-charts")["createChart"]
+  > | null>(null);
   const [candles, setCandles] = useState<CandleData[]>(data ?? []);
   const [loading, setLoading] = useState(!data);
 
@@ -73,6 +84,7 @@ export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: Tra
     }
 
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const res = await api.market.candles(symbol, timeframe, 200);
@@ -84,13 +96,13 @@ export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: Tra
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [symbol, timeframe, data]);
 
   useEffect(() => {
     let chart: ReturnType<typeof import("lightweight-charts")["createChart"]> | undefined;
-    let series: ReturnType<ReturnType<typeof import("lightweight-charts")["createChart"]>["addCandlestickSeries"]> | undefined;
-    let volumeSeries: ReturnType<ReturnType<typeof import("lightweight-charts")["createChart"]>["addHistogramSeries"]> | undefined;
 
     async function initChart() {
       if (!chartRef.current || candles.length === 0) return;
@@ -101,24 +113,35 @@ export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: Tra
         chartInst.current = null;
       }
 
+      const height = chartRef.current.clientHeight || 400;
+      const width = chartRef.current.clientWidth;
+
       chart = createChart(chartRef.current, {
-        width: chartRef.current.clientWidth,
-        height: chartRef.current.clientHeight,
+        width,
+        height,
         layout: {
           background: { type: ColorType.Solid, color: "#131c35" },
           textColor: "#94a3b8",
+          fontFamily: "Inter, system-ui, sans-serif",
         },
         grid: {
           vertLines: { color: "#1e2d4a" },
           horzLines: { color: "#1e2d4a" },
         },
         crosshair: { mode: CrosshairMode.Normal },
-        rightPriceScale: { borderColor: "#1e2d4a", scaleMargins: { top: 0.1, bottom: 0.25 } },
-        timeScale: { borderColor: "#1e2d4a", timeVisible: true, secondsVisible: false },
+        rightPriceScale: {
+          borderColor: "#1e2d4a",
+          scaleMargins: { top: 0.08, bottom: 0.22 },
+        },
+        timeScale: {
+          borderColor: "#1e2d4a",
+          timeVisible: true,
+          secondsVisible: timeframe === "1m" || timeframe === "5m",
+        },
       });
       chartInst.current = chart;
 
-      series = chart.addCandlestickSeries({
+      const series = chart.addCandlestickSeries({
         upColor: "#10b981",
         downColor: "#ef4444",
         borderUpColor: "#10b981",
@@ -127,26 +150,26 @@ export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: Tra
         wickDownColor: "#ef4444",
       });
 
-      volumeSeries = chart.addHistogramSeries({
+      const volumeSeries = chart.addHistogramSeries({
         priceFormat: { type: "volume" },
         priceScaleId: "",
-        color: "#3b82f6",
       });
-      volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+      volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
 
-      const chartCandles = candles.map((c) => ({
-        time: c.time as import("lightweight-charts").UTCTimestamp,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }));
-      series.setData(chartCandles);
+      series.setData(
+        candles.map((c) => ({
+          time: c.time as import("lightweight-charts").UTCTimestamp,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        })),
+      );
       volumeSeries.setData(
         candles.map((c) => ({
           time: c.time as import("lightweight-charts").UTCTimestamp,
           value: c.volume,
-          color: c.close >= c.open ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)",
+          color: c.close >= c.open ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)",
         })),
       );
 
@@ -155,27 +178,31 @@ export function TradingChart({ symbol = "BTCUSDT", timeframe = "1h", data }: Tra
 
     initChart();
 
-    const handleResize = () => {
+    const ro = new ResizeObserver(() => {
       if (chartRef.current && chartInst.current) {
-        chartInst.current.applyOptions({ width: chartRef.current.clientWidth });
+        chartInst.current.applyOptions({
+          width: chartRef.current.clientWidth,
+          height: chartRef.current.clientHeight || 400,
+        });
       }
-    };
-    window.addEventListener("resize", handleResize);
+    });
+    if (chartRef.current) ro.observe(chartRef.current);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      ro.disconnect();
       chart?.remove();
+      chartInst.current = null;
     };
-  }, [candles]);
+  }, [candles, timeframe]);
 
   return (
-    <div className="relative w-full h-full tv-chart-container">
+    <div className={`relative w-full h-full min-h-[280px] tv-chart-container ${className ?? ""}`}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 bg-bg-card/80">
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-bg-card/90 backdrop-blur-sm">
           <Loader2 size={24} className="animate-spin text-brand" />
         </div>
       )}
-      <div ref={chartRef} className="w-full h-full" />
+      <div ref={chartRef} className="absolute inset-0 w-full h-full" />
     </div>
   );
 }

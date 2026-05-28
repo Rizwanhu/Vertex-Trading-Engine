@@ -10,19 +10,20 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-bg-primary overflow-hidden">
-      {/* Sidebar */}
+    <div className="flex h-[100dvh] bg-bg-primary overflow-hidden">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((p) => !p)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
       />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <TopBar onMenuClick={() => setMobileOpen(true)} />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
           <AuthGuard>{children}</AuthGuard>
         </main>
       </div>

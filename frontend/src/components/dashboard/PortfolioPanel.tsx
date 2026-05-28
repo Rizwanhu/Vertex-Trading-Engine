@@ -1,49 +1,22 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { TrendingUp, TrendingDown, DollarSign, BarChart2, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { api, Balance, PnL } from "@/lib/api";
+import { formatCurrency, formatSignedCurrency, formatPercent } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-interface StatCardProps {
-  label: string;
-  value: string;
-  sub?: string;
-  positive?: boolean | null;
-  icon: React.ReactNode;
-}
-
-function StatCard({ label, value, sub, positive, icon }: StatCardProps) {
-  return (
-    <div className="card-elevated p-4 flex items-start gap-3">
-      <div className="p-2 rounded-lg bg-brand/10 text-brand shrink-0">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-xs text-text-muted">{label}</p>
-        <p className={`text-lg font-mono font-bold truncate ${
-          positive === true ? "text-green-trade" :
-          positive === false ? "text-red-trade" :
-          "text-text-primary"
-        }`}>
-          {value}
-        </p>
-        {sub && <p className="text-xs text-text-muted">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-export function PortfolioPanel() {
+export function PortfolioPanel({ compact }: { compact?: boolean }) {
   const [balance, setBalance] = useState<Balance | null>(null);
   const [pnl, setPnL] = useState<PnL | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    setError(null);
     try {
       const [b, p] = await Promise.all([api.portfolio.balance(), api.portfolio.pnl()]);
       setBalance(b);
       setPnL(p);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load portfolio");
+    } catch {
+      /* silent */
     } finally {
       setLoading(false);
     }
@@ -57,65 +30,71 @@ export function PortfolioPanel() {
 
   if (loading) {
     return (
-      <div className="card-elevated p-6 flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-text-muted" />
+      <div className="flex items-center justify-center py-8">
+        <Loader2 size={22} className="animate-spin text-brand" />
       </div>
     );
   }
 
-  if (error) {
+  const rows = [
+    { label: "Balance", value: formatCurrency(balance?.total_balance) },
+    { label: "Available", value: formatCurrency(balance?.available_balance) },
+    {
+      label: "Today P&L",
+      value: formatSignedCurrency(pnl?.today_pnl),
+      color: (pnl?.today_pnl ?? 0) >= 0 ? "text-green-trade" : "text-red-trade",
+    },
+    {
+      label: "Win rate",
+      value: pnl ? `${pnl.win_rate}%` : "—",
+      sub: pnl ? `${pnl.winning_trades}/${pnl.total_trades}` : undefined,
+    },
+  ];
+
+  if (compact) {
     return (
-      <div className="card-elevated p-4 text-center text-red-trade text-sm">
-        {error}
-      </div>
+      <dl className="space-y-3">
+        {rows.map((r) => (
+          <div key={r.label} className="flex justify-between items-baseline gap-2">
+            <dt className="text-xs text-text-muted">{r.label}</dt>
+            <dd className={cn("font-mono text-sm font-semibold tabular-nums", r.color)}>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="font-bold text-text-primary">Portfolio</h3>
-        <button onClick={fetchData} className="p-1.5 rounded hover:bg-bg-secondary text-text-muted transition-colors">
+      <div className="flex items-center justify-between">
+        <h3 className="section-title">Portfolio</h3>
+        <button type="button" onClick={fetchData} className="p-1.5 rounded-lg hover:bg-white/[0.05] text-text-muted">
           <RefreshCw size={14} />
         </button>
       </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          label="Total Balance"
-          value={`$${balance?.total_balance.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? "—"}`}
-          sub={`${balance?.currency ?? "USDT"}`}
-          icon={<DollarSign size={18} />}
-        />
-        <StatCard
-          label="Available"
-          value={`$${balance?.available_balance.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? "—"}`}
-          sub={`In positions: $${balance?.in_positions.toFixed(2) ?? "0"}`}
-          icon={<BarChart2 size={18} />}
-        />
-        <StatCard
-          label="Today's P&L"
-          value={`${pnl?.today_pnl !== undefined ? (pnl.today_pnl >= 0 ? "+" : "") + pnl.today_pnl.toFixed(2) : "—"}`}
-          sub={pnl ? `${pnl.today_pnl_pct >= 0 ? "+" : ""}${pnl.today_pnl_pct}%` : undefined}
-          positive={pnl ? pnl.today_pnl >= 0 : null}
-          icon={pnl?.today_pnl !== undefined && pnl.today_pnl >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-        />
-        <StatCard
-          label="Win Rate"
-          value={pnl ? `${pnl.win_rate}%` : "—"}
-          sub={pnl ? `${pnl.winning_trades}/${pnl.total_trades} trades` : undefined}
-          positive={pnl ? pnl.win_rate >= 50 : null}
-          icon={<BarChart2 size={18} />}
-        />
+      <div className="grid grid-cols-2 gap-2">
+        {rows.map((r) => (
+          <div key={r.label} className="p-3 rounded-xl bg-bg-secondary/60 border border-white/[0.04]">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold">{r.label}</p>
+            <p className={cn("font-mono font-bold mt-1 tabular-nums", r.color ?? "text-text-primary")}>
+              {r.value}
+            </p>
+            {r.sub && <p className="text-[10px] text-text-muted mt-0.5">{r.sub}</p>}
+          </div>
+        ))}
       </div>
-
       {pnl && (
-        <div className="card-elevated p-4">
-          <p className="text-xs text-text-muted mb-2">Total P&L</p>
-          <p className={`text-2xl font-mono font-bold ${pnl.total_pnl >= 0 ? "text-green-trade" : "text-red-trade"}`}>
-            {pnl.total_pnl >= 0 ? "+" : ""}{pnl.total_pnl.toFixed(2)} USDT
+        <div className="p-3 rounded-xl border border-white/[0.06] bg-brand/5">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Total P&L</p>
+          <p
+            className={cn(
+              "font-display text-xl font-bold mt-1",
+              pnl.total_pnl >= 0 ? "text-green-trade" : "text-red-trade",
+            )}
+          >
+            {formatSignedCurrency(pnl.total_pnl)}
           </p>
-          <p className="text-xs text-text-muted mt-1">{pnl.total_trades} total fills</p>
+          <p className="text-xs text-text-muted mt-1">{formatPercent(pnl.today_pnl_pct)} today</p>
         </div>
       )}
     </div>

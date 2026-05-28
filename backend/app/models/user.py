@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -23,7 +23,7 @@ class ApiKey(Base):
     __tablename__ = "api_keys"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     broker = Column(String, nullable=False)  # binance | alpaca | mt5
     encrypted_key = Column(String, nullable=False)
     encrypted_secret = Column(String, nullable=False)

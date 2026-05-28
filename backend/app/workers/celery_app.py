@@ -1,22 +1,36 @@
+import sys
+
 from celery import Celery
 from app.core.config import settings
+from app.core.redis import get_celery_ssl_options, get_normalized_redis_url
+
+_broker_url = get_normalized_redis_url()
+_ssl_opts = get_celery_ssl_options()
 
 celery_app = Celery(
     "algotrader",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL,
+    broker=_broker_url,
+    backend=_broker_url,
     include=["app.workers.tasks"],
 )
 
-celery_app.conf.update(
-    task_serializer="json",
-    result_serializer="json",
-    accept_content=["json"],
-    timezone="UTC",
-    enable_utc=True,
-    task_track_started=True,
-    # Default beat schedule — per-bot schedules are added dynamically
-    beat_schedule={
+# Windows cannot use the default prefork pool (multiprocessing errors on shutdown).
+_worker_defaults: dict = {
+    "broker_connection_retry_on_startup": True,
+}
+if sys.platform == "win32":
+    _worker_defaults["worker_pool"] = "solo"
+    _worker_defaults["worker_concurrency"] = 1
+
+_celery_conf: dict = {
+    "task_serializer": "json",
+    "result_serializer": "json",
+    "accept_content": ["json"],
+    "timezone": "UTC",
+    "enable_utc": True,
+    "task_track_started": True,
+    **_worker_defaults,
+    "beat_schedule": {
         "update-price-cache-every-2s": {
             "task": "app.workers.tasks.update_price_cache",
             "schedule": 2.0,
@@ -26,12 +40,15 @@ celery_app.conf.update(
             "schedule": 60.0,
         },
     },
-)
+}
 
+# Upstash / any rediss:// broker needs explicit SSL (CERT_NONE for managed TLS)
+if _ssl_opts:
+    _celery_conf["broker_use_ssl"] = _ssl_opts
+    _celery_conf["redis_backend_use_ssl"] = _ssl_opts
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Proxy helpers so API layer can call tasks without circular imports
-# ─────────────────────────────────────────────────────────────────────────────
+celery_app.conf.update(**_celery_conf)
+
 
 def execute_order_task(order_id: int):
     """Proxy so API can queue execute_order without importing tasks directly."""

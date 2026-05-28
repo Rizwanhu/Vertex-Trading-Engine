@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { ArrowDownCircle, ArrowUpCircle, Info, Loader2 } from "lucide-react";
 import { api, getToken } from "@/lib/api";
 import { useSymbolPrice } from "@/lib/usePriceFeed";
+import { formatPrice, formatPercent, symbolBase } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface TradePanelProps {
   symbol?: string;
@@ -72,58 +74,67 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
   };
 
   return (
-    <div className="card-elevated flex flex-col h-full">
-      <div className="p-4 border-b border-bg-border flex items-center justify-between">
-        <h3 className="font-bold text-text-primary">Place Order</h3>
-        <div className="text-right">
-          <p className="font-mono text-sm font-semibold text-text-primary">
-            {currentPrice > 0 ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
+    <div className="card-elevated flex flex-col h-full min-h-[440px] lg:min-h-0 overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-white/[0.02]">
+        <div>
+          <h3 className="font-display font-bold text-text-primary text-lg">Place Order</h3>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
+            {symbol.replace("USDT", "/USDT")} · Binance
+          </p>
+        </div>
+        <div className="text-right px-3 py-2 rounded-xl bg-black/30 border border-white/[0.06]">
+          <p className="font-mono text-sm font-bold text-text-primary tabular-nums">
+            {currentPrice > 0 ? formatPrice(currentPrice) : "—"}
           </p>
           {liveTick && (
-            <p className={`text-xs font-mono ${priceChange >= 0 ? "text-green-trade" : "text-red-trade"}`}>
-              {priceChange >= 0 ? "+" : ""}{priceChange.toFixed(2)}%
+            <p
+              className={cn(
+                "text-xs font-bold font-mono mt-0.5",
+                priceChange >= 0 ? "text-green-trade" : "text-red-trade",
+              )}
+            >
+              {formatPercent(priceChange)}
             </p>
           )}
         </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col gap-5">
-        {/* Order type */}
-        <div className="flex bg-bg-secondary p-1 rounded-lg">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col gap-5">
+        <div className="pill-tabs">
           {(["market", "limit"] as const).map((t) => (
             <button
               key={t}
+              type="button"
               onClick={() => setOrderType(t)}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all capitalize ${
-                orderType === t
-                  ? "bg-bg-elevated text-text-primary shadow"
-                  : "text-text-muted hover:text-text-secondary"
-              }`}
+              className={cn("pill-tab capitalize text-xs", orderType === t && "pill-tab-active")}
             >
               {t}
             </button>
           ))}
         </div>
 
-        {/* Side selector */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
+            type="button"
             onClick={() => setSide("buy")}
-            className={`flex-1 py-2 flex items-center justify-center gap-2 rounded-lg font-bold border transition-all ${
+            className={cn(
+              "py-3 flex items-center justify-center gap-2 rounded-xl font-bold border transition-all text-sm",
               side === "buy"
-                ? "bg-green-trade/20 border-green-trade text-green-trade"
-                : "border-bg-border text-text-muted hover:bg-bg-secondary"
-            }`}
+                ? "bg-green-trade/15 border-green-trade/40 text-green-trade shadow-[0_0_24px_rgba(16,185,129,0.15)]"
+                : "border-white/[0.06] text-text-muted hover:bg-white/[0.03]",
+            )}
           >
             <ArrowUpCircle size={18} /> BUY
           </button>
           <button
+            type="button"
             onClick={() => setSide("sell")}
-            className={`flex-1 py-2 flex items-center justify-center gap-2 rounded-lg font-bold border transition-all ${
+            className={cn(
+              "py-3 flex items-center justify-center gap-2 rounded-xl font-bold border transition-all text-sm",
               side === "sell"
-                ? "bg-red-trade/20 border-red-trade text-red-trade"
-                : "border-bg-border text-text-muted hover:bg-bg-secondary"
-            }`}
+                ? "bg-red-trade/15 border-red-trade/40 text-red-trade shadow-[0_0_24px_rgba(239,68,68,0.15)]"
+                : "border-white/[0.06] text-text-muted hover:bg-white/[0.03]",
+            )}
           >
             <ArrowDownCircle size={18} /> SELL
           </button>
@@ -152,7 +163,7 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
 
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              Quantity ({symbol.replace("USDT", "")})
+              Quantity ({symbolBase(symbol)})
             </label>
             <div className="relative">
               <input
@@ -164,15 +175,16 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
                 min="0"
               />
               <span className="absolute right-3 top-2.5 text-xs text-text-muted font-medium">
-                {symbol.replace("USDT", "")}
+                {symbolBase(symbol)}
               </span>
             </div>
-            <div className="flex gap-2 mt-2">
-              {[["25%", 0.25], ["50%", 0.5], ["75%", 0.75], ["Max", 1]] .map(([label, pct]) => (
+            <div className="flex gap-1.5 mt-2">
+              {[["25%", 0.25], ["50%", 0.5], ["75%", 0.75], ["Max", 1]].map(([label, pct]) => (
                 <button
                   key={label as string}
+                  type="button"
                   onClick={() => setQuantityPct(pct as number)}
-                  className="flex-1 py-1 text-[10px] font-medium bg-bg-secondary hover:bg-bg-elevated text-text-secondary rounded transition-colors"
+                  className="flex-1 py-1.5 text-[10px] font-bold bg-black/30 hover:bg-brand/15 hover:text-brand text-text-muted rounded-lg border border-white/[0.05] transition-colors"
                 >
                   {label as string}
                 </button>
@@ -182,17 +194,17 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
         </div>
 
         {/* Summary */}
-        <div className="mt-auto pt-4 border-t border-bg-border space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-text-secondary">Est. Total</span>
-            <span className="font-mono text-text-primary">
+        <div className="mt-auto pt-5 border-t border-white/[0.06] space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-black/25 border border-white/[0.05]">
+            <span className="text-sm text-text-muted font-medium">Est. Total</span>
+            <span className="font-mono font-bold text-text-primary tabular-nums">
               ~ {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
             </span>
           </div>
 
-          <div className="flex items-start gap-2 p-2.5 bg-brand/10 rounded-lg text-brand text-xs border border-brand/20">
-            <Info size={14} className="shrink-0 mt-0.5" />
-            <p>Risk Engine: Max position 2% • Auto Stop Loss 1.5% • Live price via WebSocket</p>
+          <div className="flex items-start gap-2.5 p-3 bg-brand/8 rounded-xl text-brand text-xs border border-brand/15">
+            <Info size={15} className="shrink-0 mt-0.5" />
+            <p className="leading-relaxed">Risk Engine: Max position 2% · Auto Stop Loss 1.5% · Live WebSocket feed</p>
           </div>
 
           <button

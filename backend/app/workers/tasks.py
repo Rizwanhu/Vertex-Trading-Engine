@@ -174,9 +174,10 @@ def _execute_alpaca(order) -> tuple[str, float]:
 @celery_app.task(name="app.workers.tasks.update_price_cache")
 def update_price_cache():
     """Fetch latest prices from Binance and store in Redis."""
-    import redis
     import requests as req_lib
-    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    from app.core.redis import get_sync_redis
+
+    r = get_sync_redis()
 
     for symbol in SYMBOLS:
         try:
@@ -196,13 +197,14 @@ def update_price_cache():
 @celery_app.task(name="app.workers.tasks.fetch_all_candles")
 def fetch_all_candles():
     """Fetch and cache candles for all actively running bots."""
-    import redis, json
+    import json
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
     from app.models.bot import Bot, BotStatus
+    from app.core.redis import get_sync_redis
 
     engine = create_engine(settings.DATABASE_SYNC_URL)
-    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    r = get_sync_redis()
 
     with Session(engine) as db:
         running_bots = db.query(Bot).filter(Bot.status == BotStatus.RUNNING).all()
@@ -228,16 +230,17 @@ def fetch_all_candles():
 @celery_app.task(name="app.workers.tasks.run_bot_tick")
 def run_bot_tick(bot_id: int):
     """Run one tick for an active trading bot: candles → strategy → signal → order."""
-    import redis, json
+    import json
     import pandas as pd
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
     from app.models.bot import Bot, BotStatus, StrategyType
     from app.models.order import Order, OrderSide, OrderType, OrderStatus
+    from app.core.redis import get_sync_redis
     from datetime import datetime, timezone
 
     engine = create_engine(settings.DATABASE_SYNC_URL)
-    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    r = get_sync_redis()
 
     with Session(engine) as db:
         bot = db.get(Bot, bot_id)

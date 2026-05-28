@@ -1,92 +1,124 @@
 "use client";
-import { Key, Shield, Bell, Database } from "lucide-react";
+import { useState } from "react";
+import { Key, Shield, Bell, Database, Settings2 } from "lucide-react";
+import { HeroBanner } from "@/components/ui/HeroBanner";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { id: "api", label: "API Keys", icon: Key },
+  { id: "risk", label: "Risk", icon: Shield },
+  { id: "notify", label: "Alerts", icon: Bell },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
 
 export default function SettingsPage() {
+  const [tab, setTab] = useState<TabId>("api");
+  const [telegramOn, setTelegramOn] = useState(true);
+
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full pb-10">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-text-secondary text-sm mt-1">Manage API keys, risk limits, and account preferences.</p>
-      </div>
+    <div className="page-container max-w-4xl">
+      <HeroBanner
+        badge="Configuration"
+        title={
+          <>
+            Account <span className="text-gradient">Settings</span>
+          </>
+        }
+        description="Manage broker connections, global risk limits, and notification preferences."
+      />
 
-      {/* API Keys */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-bg-border text-text-primary">
-          <Key className="text-brand" />
-          <h2 className="text-lg font-semibold">Broker API Keys</h2>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="bg-bg-elevated p-4 rounded-lg border border-bg-border flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-500 font-bold">B</div>
-              <div>
-                <h4 className="font-medium text-text-primary">Binance (Production)</h4>
-                <p className="text-xs text-text-muted mt-0.5">Added: May 01, 2026</p>
-              </div>
-            </div>
-            <button className="text-xs font-medium text-red-trade hover:text-red-trade/80 transition-colors">Delete</button>
-          </div>
-          
-          <button className="w-full py-3 border border-dashed border-bg-border rounded-lg text-text-secondary hover:text-text-primary hover:border-brand/50 hover:bg-brand/5 transition-all flex items-center justify-center gap-2 font-medium">
-            + Add New API Key
+      <div className="pill-tabs max-w-md">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={cn("pill-tab flex items-center justify-center gap-2", tab === id && "pill-tab-active")}
+          >
+            <Icon size={15} />
+            {label}
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* Global Risk */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-bg-border text-text-primary">
-          <Shield className="text-brand" />
-          <h2 className="text-lg font-semibold">Global Risk Limits</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Max Position Size (%)</label>
-            <input type="number" defaultValue="2.0" className="input-field" step="0.1" />
-            <p className="text-xs text-text-muted mt-1.5">Maximum % of portfolio allowed per trade.</p>
+      {tab === "api" && (
+        <SectionCard title="Broker API Keys" icon={Key} glow>
+          <p className="text-sm text-text-muted mb-5">Connect exchanges for live trading and portfolio sync.</p>
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-xl bg-black/25 border border-white/[0.06] hover:border-brand/20 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/25 flex items-center justify-center text-yellow-400 font-display font-bold text-xl">
+                  B
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary">Binance</h4>
+                  <p className="text-xs text-text-muted mt-0.5 flex items-center gap-2">
+                    <span className="live-dot" /> Production · Added May 2026
+                  </p>
+                </div>
+              </div>
+              <button type="button" className="text-xs font-bold text-red-trade hover:bg-red-trade/10 px-4 py-2 rounded-lg border border-red-trade/20 transition-colors self-start">
+                Disconnect
+              </button>
+            </div>
+            <button
+              type="button"
+              className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-text-secondary hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all flex items-center justify-center gap-2 font-semibold text-sm"
+            >
+              + Add New API Key
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Daily Loss Limit (%)</label>
-            <input type="number" defaultValue="5.0" className="input-field" step="0.1" />
-            <p className="text-xs text-text-muted mt-1.5">Halt all trading if daily loss exceeds this.</p>
+        </SectionCard>
+      )}
+
+      {tab === "risk" && (
+        <SectionCard title="Global Risk Limits" icon={Shield} glow>
+          <p className="text-sm text-text-muted mb-6">These limits apply to all manual trades and new bots.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            {[
+              { label: "Max Position Size (%)", hint: "Maximum % of portfolio per trade", default: "2.0" },
+              { label: "Daily Loss Limit (%)", hint: "Halt all trading if exceeded", default: "5.0" },
+              { label: "Default Stop Loss (%)", hint: "Applied to new bots automatically", default: "1.5" },
+              { label: "Max Open Trades", hint: "Concurrent positions allowed", default: "5" },
+            ].map((field) => (
+              <div key={field.label} className="space-y-2">
+                <label className="block text-sm font-semibold text-text-primary">{field.label}</label>
+                <input type="number" defaultValue={field.default} className="input-field" step="0.1" />
+                <p className="text-xs text-text-muted">{field.hint}</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Default Stop Loss (%)</label>
-            <input type="number" defaultValue="1.5" className="input-field" step="0.1" />
+          <div className="mt-8 flex justify-end">
+            <button type="button" className="btn-primary px-8">Save Risk Settings</button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Max Open Trades</label>
-            <input type="number" defaultValue="5" className="input-field" />
-          </div>
-        </div>
-        <div className="mt-6 flex justify-end">
-          <button className="btn-primary">Save Risk Settings</button>
-        </div>
-      </div>
-      
-      {/* Notifications */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-bg-border text-text-primary">
-          <Bell className="text-brand" />
-          <h2 className="text-lg font-semibold">Notifications</h2>
-        </div>
-        
-        <div className="space-y-4">
-          <label className="flex items-center justify-between cursor-pointer">
+        </SectionCard>
+      )}
+
+      {tab === "notify" && (
+        <SectionCard title="Notifications" icon={Bell} glow>
+          <div className="flex items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-black/20 border border-white/[0.05] mb-5">
             <div>
-              <p className="font-medium text-text-primary">Telegram Alerts</p>
-              <p className="text-xs text-text-muted mt-0.5">Receive execution and error alerts via Telegram.</p>
+              <p className="font-semibold text-text-primary">Telegram Alerts</p>
+              <p className="text-xs text-text-muted mt-1">Execution confirmations and error notifications</p>
             </div>
-            <div className="w-10 h-6 bg-brand rounded-full relative">
-              <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-            </div>
-          </label>
-          <div className="pt-2">
-            <input type="text" placeholder="Telegram Chat ID" className="input-field max-w-sm" />
+            <ToggleSwitch checked={telegramOn} onChange={() => setTelegramOn(!telegramOn)} />
           </div>
-        </div>
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2 block">
+              Telegram Chat ID
+            </label>
+            <input type="text" placeholder="@your_username or chat ID" className="input-field max-w-md" />
+          </div>
+        </SectionCard>
+      )}
+
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] text-text-muted text-sm">
+        <Settings2 size={16} className="text-brand shrink-0" />
+        <Database size={16} className="shrink-0 opacity-50" />
+        <span>Settings sync to backend when API endpoints are connected.</span>
       </div>
     </div>
   );

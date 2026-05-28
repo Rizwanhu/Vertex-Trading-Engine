@@ -1,0 +1,68 @@
+
+
+docker compose up postgres redis -d
+docker compose ps
+
+in backend run this venv
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+http://localhost:8000/health
+
+Expected:
+
+{"status":"ok"}
+
+
+
+
+# Run from: backend folder (venv activated)
+
+# --- API ---
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# --- Celery worker (Windows: MUST use --pool=solo) ---
+# STOP old worker first (Ctrl+C), then start fresh — code changes are NOT picked up otherwise
+# Upstash rediss://: ssl_cert_reqs is set automatically in celery_app (CERT_NONE)
+celery -A app.workers.celery_app worker --loglevel=info --pool=solo -c 1
+
+# --- Celery beat (scheduled tasks) — run in a SECOND terminal ---
+celery -A app.workers.celery_app beat --loglevel=info
+
+# --- Frontend ---
+cd ..\frontend
+npm run dev
+
+# --- Local Redis (optional, if Upstash DNS fails) ---
+# From project root: docker compose up redis -d
+# Then in backend/.env: REDIS_URL=redis://localhost:6379/0
+
+# --- Test Redis (from backend folder) ---
+# $env:PYTHONPATH="."; python scripts/test_redis.py
+
+
+cors this also take care
+http://localhost:3000
+
+npm run dev
+
+frontend .env what scenes:
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+
+--------------------------------------------------
+
+FULL DOCKER WAY COMMANDS:
+
+root .env in algotrade dir
+
+docker compose up --build
+
+in root dir of algotrade
+
+frontend api for checking http://localhost:3000
+backend api for checking http://localhost:8000
+
+http://localhost:8000/health
+http://localhost:8000/docs
+
+stop docker:
+docker compose down
