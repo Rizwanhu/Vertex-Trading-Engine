@@ -2,68 +2,64 @@
 import { usePriceFeed } from "@/lib/usePriceFeed";
 import { formatPercent, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { MiniSparkline } from "@/components/charts/MiniSparkline";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 const PAIRS = [
-  { symbol: "BTCUSDT", label: "Bitcoin", short: "BTC", gradient: "from-orange-500/20 to-orange-600/5" },
-  { symbol: "ETHUSDT", label: "Ethereum", short: "ETH", gradient: "from-indigo-500/20 to-indigo-600/5" },
-  { symbol: "SOLUSDT", label: "Solana", short: "SOL", gradient: "from-purple-500/20 to-purple-600/5" },
-  { symbol: "BNBUSDT", label: "BNB", short: "BNB", gradient: "from-yellow-500/20 to-yellow-600/5" },
+  { symbol: "BTCUSDT", label: "Bitcoin", short: "BTC" },
+  { symbol: "ETHUSDT", label: "Ethereum", short: "ETH" },
+  { symbol: "SOLUSDT", label: "Solana", short: "SOL" },
+  { symbol: "BNBUSDT", label: "BNB", short: "BNB" },
 ];
 
-export function MarketStrip() {
+interface MarketStripProps {
+  activeSymbol?: string;
+  onSelect?: (symbol: string) => void;
+}
+
+export function MarketStrip({ activeSymbol, onSelect }: MarketStripProps) {
   const prices = usePriceFeed(PAIRS.map((p) => p.symbol));
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      {PAIRS.map(({ symbol, label, short, gradient }) => {
+    <div className="grid grid-cols-2 gap-2.5">
+      {PAIRS.map(({ symbol, label, short }) => {
         const tick = prices[symbol];
         const price = tick ? parseFloat(tick.price) : null;
         const change = tick ? parseFloat(tick.change) : null;
         const isUp = change !== null ? change >= 0 : true;
+        const active = activeSymbol === symbol;
+        const Tag = onSelect ? "button" : "div";
 
         return (
-          <div
+          <Tag
             key={symbol}
+            type={onSelect ? "button" : undefined}
+            onClick={onSelect ? () => onSelect(symbol) : undefined}
             className={cn(
-              "glass-panel p-4 sm:p-5 relative overflow-hidden group hover:border-brand/25 transition-all duration-300",
-              "bg-gradient-to-br",
-              gradient,
+              "dash-market-row !p-3",
+              active && "dash-market-row-active",
             )}
           >
-            <div className="absolute top-0 right-0 w-20 h-20 bg-white/[0.02] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-brand/10 transition-colors" />
-            <div className="relative flex items-start justify-between mb-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">{short}</p>
-                <p className="text-xs text-text-secondary font-medium">{label}</p>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="text-left">
+                <p className="dash-label">{short}</p>
+                <p className="text-xs text-[var(--auth-muted)] mt-0.5">{label}</p>
               </div>
-              <div
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center text-xs font-display font-bold border",
-                  isUp
-                    ? "bg-green-trade/10 text-green-trade border-green-trade/25"
-                    : "bg-red-trade/10 text-red-trade border-red-trade/25",
-                )}
-              >
-                {short.slice(0, 2)}
-              </div>
+              <MiniSparkline positive={isUp} accent />
             </div>
-            <p className="relative font-mono text-xl font-bold text-text-primary tabular-nums">
-              {price !== null ? formatPrice(price) : "—"}
-            </p>
+            <p className="dash-market-price text-base">{price !== null ? formatPrice(price) : "—"}</p>
             {change !== null && (
               <p
                 className={cn(
-                  "relative flex items-center gap-1.5 text-xs font-bold mt-2",
-                  isUp ? "text-green-trade" : "text-red-trade",
+                  "flex items-center gap-1 text-[11px] font-bold mt-1.5",
+                  isUp ? "text-[var(--auth-accent)]" : "text-[#f87171]",
                 )}
               >
-                {isUp ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                 {formatPercent(change)}
-                <span className="text-text-muted font-normal ml-1">24h</span>
               </p>
             )}
-          </div>
+          </Tag>
         );
       })}
     </div>

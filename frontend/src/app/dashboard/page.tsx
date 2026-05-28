@@ -1,19 +1,21 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { TradingChart } from "@/components/charts/TradingChart";
-import { ChartHeader } from "@/components/charts/ChartHeader";
+import { ChartHeader, type ChartMarketStats } from "@/components/charts/ChartHeader";
 import { TradePanel } from "@/components/dashboard/TradePanel";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { PortfolioPanel } from "@/components/dashboard/PortfolioPanel";
 import { MarketStrip } from "@/components/dashboard/MarketStrip";
-import { StatCard } from "@/components/ui/StatCard";
-import { HeroBanner } from "@/components/ui/HeroBanner";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { Activity, Wallet, Bot, TrendingUp, Sparkles, ArrowUpRight, Zap } from "lucide-react";
+import { MarketWatchlist } from "@/components/dashboard/MarketWatchlist";
+import { DepthBook } from "@/components/dashboard/DepthBook";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashStatCard } from "@/components/dashboard/ui/DashStatCard";
+import { DashSection } from "@/components/dashboard/ui/DashSection";
+import { Activity, Wallet, Bot, TrendingUp, CandlestickChart, Layers3 } from "lucide-react";
 import { api, Balance, PnL, Bot as BotType } from "@/lib/api";
 import { useSymbolPrice } from "@/lib/usePriceFeed";
 import { formatCurrency, formatSignedCurrency, formatPercent } from "@/lib/format";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function DashboardOverview() {
@@ -23,8 +25,10 @@ export default function DashboardOverview() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [timeframe, setTimeframe] = useState("1h");
+  const [marketStats, setMarketStats] = useState<ChartMarketStats | null>(null);
 
   const tick = useSymbolPrice(symbol);
+  const livePrice = tick ? parseFloat(tick.price) : 0;
 
   const fetchStats = useCallback(async () => {
     try {
@@ -52,76 +56,109 @@ export default function DashboardOverview() {
   const runningBots = bots.filter((b) => b.status === "running").length;
 
   return (
-    <div className="page-container">
-      <HeroBanner
-        badge="Live Dashboard"
-        title={
-          <>
-            Trading <span className="text-gradient">Command Center</span>
-          </>
-        }
-        description="Monitor markets, execute trades, and supervise automated strategies from one unified workspace."
-        stats={[
-          { label: "Balance", value: statsLoading ? "…" : formatCurrency(balance?.total_balance) },
-          { label: "Today", value: statsLoading ? "…" : formatSignedCurrency(pnl?.today_pnl) },
-          { label: "Bots Live", value: statsLoading ? "…" : `${runningBots}/${bots.length}` },
-        ]}
-        actions={
-          <>
-            <Link href="/dashboard/trade" className="btn-primary text-sm py-2.5 px-5 inline-flex items-center gap-2">
-              <Zap size={16} /> Quick Trade
-            </Link>
-            <Link href="/dashboard/bots" className="btn-ghost text-sm py-2.5 inline-flex items-center gap-2">
-              Manage Bots <ArrowUpRight size={16} />
-            </Link>
-          </>
-        }
+    <>
+      <DashboardHeader
+        symbol={symbol}
+        tick={tick}
+        balance={statsLoading ? "…" : formatCurrency(balance?.total_balance)}
+        todayPnl={statsLoading ? "…" : formatSignedCurrency(pnl?.today_pnl)}
+        botsLive={statsLoading ? "…" : `${runningBots}/${bots.length}`}
       />
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard title="Total Balance" value={formatCurrency(balance?.total_balance)} sub={balance ? `${formatCurrency(balance.in_positions)} deployed` : undefined} trend="neutral" icon={Wallet} loading={statsLoading} highlight delay={0} />
-        <StatCard title="Today's P&L" value={formatSignedCurrency(pnl?.today_pnl)} sub={pnl ? formatPercent(pnl.today_pnl_pct) : undefined} trend={(pnl?.today_pnl ?? 0) >= 0 ? "up" : "down"} icon={Activity} loading={statsLoading} delay={50} />
-        <StatCard title="Active Bots" value={statsLoading ? "…" : String(runningBots)} sub={`${bots.length} configured`} trend={runningBots > 0 ? "up" : "neutral"} icon={Bot} loading={statsLoading} delay={100} />
-        <StatCard title="Win Rate" value={pnl ? `${pnl.win_rate}%` : "—"} sub={pnl ? `${pnl.winning_trades}W / ${pnl.total_trades} trades` : undefined} trend={(pnl?.win_rate ?? 0) >= 50 ? "up" : "down"} icon={TrendingUp} loading={statsLoading} delay={150} />
+      <div className="dash-stat-grid">
+        <DashStatCard
+          title="Total balance"
+          value={formatCurrency(balance?.total_balance)}
+          sub={balance ? `${formatCurrency(balance.in_positions)} deployed` : undefined}
+          trend="neutral"
+          icon={Wallet}
+          loading={statsLoading}
+          highlight
+          index={0}
+        />
+        <DashStatCard
+          title="Today's P&L"
+          value={formatSignedCurrency(pnl?.today_pnl)}
+          sub={pnl ? formatPercent(pnl.today_pnl_pct) : undefined}
+          trend={(pnl?.today_pnl ?? 0) >= 0 ? "up" : "down"}
+          icon={Activity}
+          loading={statsLoading}
+          index={1}
+        />
+        <DashStatCard
+          title="Active bots"
+          value={statsLoading ? "…" : String(runningBots)}
+          sub={`${bots.length} configured`}
+          trend={runningBots > 0 ? "up" : "neutral"}
+          icon={Bot}
+          loading={statsLoading}
+          index={2}
+        />
+        <DashStatCard
+          title="Win rate"
+          value={pnl ? `${pnl.win_rate}%` : "—"}
+          sub={pnl ? `${pnl.winning_trades}W / ${pnl.total_trades} trades` : undefined}
+          trend={(pnl?.win_rate ?? 0) >= 50 ? "up" : "down"}
+          icon={TrendingUp}
+          loading={statsLoading}
+          index={3}
+        />
       </div>
 
       {bots.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {bots.slice(0, 6).map((b) => (
-            <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex flex-wrap gap-2"
+        >
+          {bots.slice(0, 8).map((b) => (
+            <span
               key={b.id}
               className={cn(
-                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border",
-                b.status === "running"
-                  ? "bg-green-trade/10 text-green-trade border-green-trade/25"
-                  : "bg-white/[0.03] text-text-muted border-white/[0.06]",
+                "dash-chip",
+                b.status === "running" && "dash-chip-active",
               )}
             >
-              {b.status === "running" && <span className="live-dot" />}
+              {b.status === "running" && <span className="dash-live-dot" />}
               {b.name}
-            </div>
+            </span>
           ))}
-        </div>
+        </motion.div>
       )}
 
-      <MarketStrip />
+      <div className="lg:hidden">
+        <DashSection title="Markets" subtitle="Tap a pair to switch chart" flush>
+          <div className="p-3">
+            <MarketStrip activeSymbol={symbol} onSelect={setSymbol} />
+          </div>
+        </DashSection>
+      </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 lg:gap-6">
-        <SectionCard
-          title="Live Chart"
-          noPadding
+      <div className="dash-trade-grid">
+        <div className="hidden xl:block">
+          <DashSection
+            title="Watchlist"
+            subtitle="Live WebSocket feed"
+            className="h-full min-h-[640px]"
+            glow
+            flush
+          >
+            <MarketWatchlist activeSymbol={symbol} onSelect={setSymbol} />
+          </DashSection>
+        </div>
+
+        <DashSection
+          title="Price chart"
+          subtitle={`${symbol.replace("USDT", "/USDT")} · ${timeframe}`}
+          icon={CandlestickChart}
           glow
-          className="min-h-[460px] lg:min-h-[580px]"
+          flush
           action={
-            <select
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              className="bg-black/30 border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs font-bold text-text-primary focus:outline-none focus:border-brand/40"
-            >
-              {["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"].map((s) => (
-                <option key={s} value={s}>{s.replace("USDT", "/USDT")}</option>
-              ))}
-            </select>
+            <span className="dash-live-badge">
+              <span className="dash-live-dot" />
+              Real-time
+            </span>
           }
         >
           <ChartHeader
@@ -129,27 +166,48 @@ export default function DashboardOverview() {
             tick={tick}
             timeframe={timeframe}
             onTimeframeChange={setTimeframe}
-            className="border-b border-white/[0.06] !bg-transparent !p-3 sm:!p-4"
+            marketStats={marketStats}
+            timeframes={["1m", "5m", "15m", "1h", "4h", "1d", "1w"]}
           />
-          <div className="flex-1 min-h-[340px] relative">
-            <TradingChart symbol={symbol} timeframe={timeframe} />
+          <div className="dash-chart-wrap">
+            <div className="dash-chart-glow" aria-hidden />
+            <TradingChart
+              symbol={symbol}
+              timeframe={timeframe}
+              onMarketStats={setMarketStats}
+              className="!min-h-[360px] lg:!min-h-[400px]"
+            />
           </div>
-        </SectionCard>
+          <div className="border-t border-[var(--auth-border)]">
+            <div className="dash-section-head !py-2.5 !px-4">
+              <span className="dash-label">Order book</span>
+              <span className="text-[10px] text-[var(--auth-muted)]">Depth preview</span>
+            </div>
+            <DepthBook price={livePrice} />
+          </div>
+        </DashSection>
 
         <div className="flex flex-col gap-4">
           <TradePanel symbol={symbol} broker="binance" />
-          <SectionCard title="Portfolio Snapshot" className="hidden xl:flex flex-col" glow>
-            <div className="flex items-center gap-2 mb-3 -mt-1">
-              <Sparkles size={14} className="text-brand" />
+          <div className="hidden xl:block dash-card dash-card-glow">
+            <div className="dash-section-head">
+              <h3 className="dash-section-title">
+                <span className="dash-section-icon">
+                  <Layers3 size={16} strokeWidth={2.5} />
+                </span>
+                Portfolio
+              </h3>
             </div>
-            <PortfolioPanel compact />
-          </SectionCard>
+            <div className="dash-body !pt-4">
+              <PortfolioPanel compact />
+            </div>
+          </div>
         </div>
       </div>
 
-      <SectionCard title="Recent Orders" noPadding className="min-h-[320px]">
+      <DashSection title="Recent orders" subtitle="Open positions & history" flush>
         <OrdersTable />
-      </SectionCard>
-    </div>
+      </DashSection>
+    </>
   );
 }

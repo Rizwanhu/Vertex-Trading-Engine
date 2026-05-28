@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api, Candle, getToken } from "@/lib/api";
+import type { ChartMarketStats } from "@/components/charts/ChartHeader";
 
 interface CandleData {
   time: number;
@@ -17,6 +18,20 @@ interface TradingChartProps {
   timeframe?: string;
   data?: CandleData[];
   className?: string;
+  onMarketStats?: (stats: ChartMarketStats) => void;
+}
+
+function computeMarketStats(candles: CandleData[]): ChartMarketStats {
+  if (candles.length === 0) return { high: 0, low: 0, volume: 0 };
+  let high = -Infinity;
+  let low = Infinity;
+  let volume = 0;
+  for (const c of candles) {
+    high = Math.max(high, c.high);
+    low = Math.min(low, c.low);
+    volume += c.volume;
+  }
+  return { high, low, volume };
 }
 
 function generateMockCandles(count = 150): CandleData[] {
@@ -63,6 +78,7 @@ export function TradingChart({
   timeframe = "1h",
   data,
   className,
+  onMarketStats,
 }: TradingChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInst = useRef<ReturnType<
@@ -102,6 +118,12 @@ export function TradingChart({
   }, [symbol, timeframe, data]);
 
   useEffect(() => {
+    if (candles.length > 0 && onMarketStats) {
+      onMarketStats(computeMarketStats(candles));
+    }
+  }, [candles, onMarketStats]);
+
+  useEffect(() => {
     let chart: ReturnType<typeof import("lightweight-charts")["createChart"]> | undefined;
 
     async function initChart() {
@@ -120,21 +142,26 @@ export function TradingChart({
         width,
         height,
         layout: {
-          background: { type: ColorType.Solid, color: "#131c35" },
-          textColor: "#94a3b8",
+          background: { type: ColorType.Solid, color: "#0b0e11" },
+          textColor: "#5c6678",
           fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: 11,
         },
         grid: {
-          vertLines: { color: "#1e2d4a" },
-          horzLines: { color: "#1e2d4a" },
+          vertLines: { color: "rgba(255, 255, 255, 0.04)" },
+          horzLines: { color: "rgba(255, 255, 255, 0.04)" },
         },
-        crosshair: { mode: CrosshairMode.Normal },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: { color: "rgba(0, 255, 163, 0.35)", width: 1, style: 2 },
+          horzLine: { color: "rgba(0, 255, 163, 0.35)", width: 1, style: 2 },
+        },
         rightPriceScale: {
-          borderColor: "#1e2d4a",
-          scaleMargins: { top: 0.08, bottom: 0.22 },
+          borderColor: "rgba(36, 48, 73, 0.5)",
+          scaleMargins: { top: 0.1, bottom: 0.2 },
         },
         timeScale: {
-          borderColor: "#1e2d4a",
+          borderColor: "rgba(36, 48, 73, 0.5)",
           timeVisible: true,
           secondsVisible: timeframe === "1m" || timeframe === "5m",
         },
@@ -142,12 +169,12 @@ export function TradingChart({
       chartInst.current = chart;
 
       const series = chart.addCandlestickSeries({
-        upColor: "#10b981",
-        downColor: "#ef4444",
-        borderUpColor: "#10b981",
-        borderDownColor: "#ef4444",
-        wickUpColor: "#10b981",
-        wickDownColor: "#ef4444",
+        upColor: "#00ffa3",
+        downColor: "#f87171",
+        borderUpColor: "#33ffb5",
+        borderDownColor: "#fca5a5",
+        wickUpColor: "#33ffb5",
+        wickDownColor: "#fca5a5",
       });
 
       const volumeSeries = chart.addHistogramSeries({
@@ -169,7 +196,7 @@ export function TradingChart({
         candles.map((c) => ({
           time: c.time as import("lightweight-charts").UTCTimestamp,
           value: c.volume,
-          color: c.close >= c.open ? "rgba(16,185,129,0.35)" : "rgba(239,68,68,0.35)",
+          color: c.close >= c.open ? "rgba(0,255,163,0.22)" : "rgba(248,113,113,0.22)",
         })),
       );
 
@@ -197,12 +224,13 @@ export function TradingChart({
 
   return (
     <div className={`relative w-full h-full min-h-[280px] tv-chart-container ${className ?? ""}`}>
+      <div className="chart-glow absolute inset-0 pointer-events-none z-0" aria-hidden />
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 bg-bg-card/90 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#0b0e11]/90 backdrop-blur-sm">
           <Loader2 size={24} className="animate-spin text-brand" />
         </div>
       )}
-      <div ref={chartRef} className="absolute inset-0 w-full h-full" />
+      <div ref={chartRef} className="absolute inset-0 w-full h-full z-[1]" />
     </div>
   );
 }

@@ -30,8 +30,8 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 size={22} className="animate-spin text-brand" />
+      <div className="flex items-center justify-center py-10">
+        <Loader2 size={22} className="animate-spin" style={{ color: "var(--auth-accent)" }} />
       </div>
     );
   }
@@ -42,22 +42,38 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
     {
       label: "Today P&L",
       value: formatSignedCurrency(pnl?.today_pnl),
-      color: (pnl?.today_pnl ?? 0) >= 0 ? "text-green-trade" : "text-red-trade",
+      accent: (pnl?.today_pnl ?? 0) >= 0 ? "var(--auth-accent)" : "#f87171",
     },
     {
       label: "Win rate",
       value: pnl ? `${pnl.win_rate}%` : "—",
-      sub: pnl ? `${pnl.winning_trades}/${pnl.total_trades}` : undefined,
+      sub: pnl ? `${pnl.winning_trades}/${pnl.total_trades} trades` : undefined,
     },
   ];
 
   if (compact) {
     return (
-      <dl className="space-y-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex justify-between items-baseline gap-2">
-            <dt className="text-xs text-text-muted">{r.label}</dt>
-            <dd className={cn("font-mono text-sm font-semibold tabular-nums", r.color)}>{r.value}</dd>
+      <dl className="space-y-0">
+        {rows.map((r, i) => (
+          <div
+            key={r.label}
+            className={cn(
+              "flex justify-between items-baseline gap-3 py-3.5",
+              i < rows.length - 1 && "border-b border-[var(--auth-border)]",
+            )}
+          >
+            <dt className="dash-label !normal-case !tracking-normal text-[0.8125rem]">{r.label}</dt>
+            <dd className="text-right">
+              <span
+                className="font-mono text-sm font-semibold tabular-nums"
+                style={{ color: r.accent ?? "var(--auth-text)" }}
+              >
+                {r.value}
+              </span>
+              {r.sub && (
+                <p className="text-[10px] text-[var(--auth-muted)] mt-0.5">{r.sub}</p>
+              )}
+            </dd>
           </div>
         ))}
       </dl>
@@ -65,38 +81,34 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="section-title">Portfolio</h3>
-        <button type="button" onClick={fetchData} className="p-1.5 rounded-lg hover:bg-white/[0.05] text-text-muted">
+        <h3 className="dash-section-title">Portfolio</h3>
+        <button
+          type="button"
+          onClick={fetchData}
+          className="p-2 rounded-lg text-[var(--auth-muted)] hover:text-[var(--auth-text)] hover:bg-white/[0.04] transition-colors"
+        >
           <RefreshCw size={14} />
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2.5">
         {rows.map((r) => (
-          <div key={r.label} className="p-3 rounded-xl bg-bg-secondary/60 border border-white/[0.04]">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold">{r.label}</p>
-            <p className={cn("font-mono font-bold mt-1 tabular-nums", r.color ?? "text-text-primary")}>
+          <div
+            key={r.label}
+            className="p-3.5 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]"
+          >
+            <p className="dash-label">{r.label}</p>
+            <p
+              className="font-mono font-bold mt-1.5 tabular-nums text-[var(--auth-text)]"
+              style={{ color: r.accent }}
+            >
               {r.value}
             </p>
-            {r.sub && <p className="text-[10px] text-text-muted mt-0.5">{r.sub}</p>}
+            {r.sub && <p className="text-[10px] text-[var(--auth-muted)] mt-1">{r.sub}</p>}
           </div>
         ))}
       </div>
-      {pnl && (
-        <div className="p-3 rounded-xl border border-white/[0.06] bg-brand/5">
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">Total P&L</p>
-          <p
-            className={cn(
-              "font-display text-xl font-bold mt-1",
-              pnl.total_pnl >= 0 ? "text-green-trade" : "text-red-trade",
-            )}
-          >
-            {formatSignedCurrency(pnl.total_pnl)}
-          </p>
-          <p className="text-xs text-text-muted mt-1">{formatPercent(pnl.today_pnl_pct)} today</p>
-        </div>
-      )}
     </div>
   );
 }

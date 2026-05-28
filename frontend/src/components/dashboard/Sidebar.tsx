@@ -9,7 +9,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
   Wallet,
   LogOut,
   X,
@@ -62,21 +61,20 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
-          "bg-bg-secondary/95 backdrop-blur-xl border-r border-white/[0.06]",
+          "dash-sidebar fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
           "transition-all duration-300 ease-out shrink-0",
           collapsed ? "w-[4.25rem] lg:w-16" : "w-64",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/[0.06]">
-          <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shrink-0 shadow-glow">
-            <Zap size={20} className="text-white" strokeWidth={2.5} />
-          </div>
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-[var(--auth-border)]">
+          <div className="auth-brand-dot shrink-0 !w-10 !h-10" />
           {expanded && (
-            <div className="min-w-0 flex-1">
-              <p className="font-display font-bold text-text-primary leading-none">AlgoTrader</p>
-              <p className="text-[10px] text-brand font-bold tracking-[0.2em] mt-1">PRO</p>
+            <div className="min-w-0 flex-1 auth-brand !gap-0">
+              <span className="auth-brand-name">AlgoTrader</span>
+              <p className="text-[10px] font-bold tracking-[0.2em] mt-1" style={{ color: "var(--auth-accent)" }}>
+                PRO
+              </p>
             </div>
           )}
           {mobileOpen && onMobileClose && (
@@ -102,10 +100,10 @@ export function Sidebar({
                 onClick={onMobileClose}
                 title={!expanded ? label : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-[var(--auth-radius)] text-sm font-medium transition-all duration-200 border",
                   isActive
-                    ? "nav-glow bg-brand/10 text-brand border border-brand/20"
-                    : "text-text-secondary hover:text-text-primary hover:bg-white/[0.04] border border-transparent",
+                    ? "text-[var(--auth-accent)] bg-[var(--auth-accent-dim)] border-[rgba(0,255,163,0.25)] shadow-[0_0_20px_rgba(0,255,163,0.08)]"
+                    : "text-[var(--auth-label)] border-transparent hover:text-[var(--auth-text)] hover:bg-white/[0.04]",
                 )}
               >
                 <Icon size={18} className="shrink-0" strokeWidth={isActive ? 2.5 : 2} />
@@ -115,11 +113,11 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="px-2 py-4 border-t border-white/[0.06] space-y-1">
+        <div className="px-2 py-4 border-t border-[var(--auth-border)] space-y-1">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-text-secondary hover:text-red-trade hover:bg-red-trade/10 transition-all"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[var(--auth-radius)] text-sm text-[var(--auth-label)] hover:text-[#f87171] hover:bg-[rgba(248,113,113,0.08)] transition-all"
           >
             <LogOut size={18} />
             {expanded && <span>Log out</span>}

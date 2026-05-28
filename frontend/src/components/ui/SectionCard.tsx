@@ -22,7 +22,7 @@ export function SectionCard({
 }: SectionCardProps) {
   return (
     <div className={cn(glow ? "glass-panel-glow" : "glass-panel", "flex flex-col overflow-hidden", className)}>
-      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-white/[0.06] shrink-0 bg-white/[0.02]">
+      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.06] shrink-0 bg-gradient-to-r from-white/[0.03] to-transparent">
         <div className="flex items-center gap-2.5">
           {Icon && (
             <div className="p-2 rounded-xl bg-brand/10 border border-brand/20 text-brand">

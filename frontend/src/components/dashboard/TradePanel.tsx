@@ -6,6 +6,7 @@ import { api, getToken } from "@/lib/api";
 import { useSymbolPrice } from "@/lib/usePriceFeed";
 import { formatPrice, formatPercent, symbolBase } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DashSegmented } from "@/components/dashboard/ui/DashSegmented";
 
 interface TradePanelProps {
   symbol?: string;
@@ -19,7 +20,6 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
   const [limitPrice, setLimitPrice] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Live price from WebSocket
   const liveTick = useSymbolPrice(symbol);
   const currentPrice = liveTick ? parseFloat(liveTick.price) : 0;
   const priceChange = liveTick ? parseFloat(liveTick.change) : 0;
@@ -28,7 +28,6 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
   const totalValue = (parseFloat(quantity) || 0) * execPrice;
 
   const setQuantityPct = (pct: number) => {
-    // Use a nominal balance for percentage calculation
     const nominalBalance = 1000;
     const qty = (nominalBalance * pct) / (currentPrice || 1);
     setQuantity(qty.toFixed(6));
@@ -61,9 +60,8 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
 
       toast.success(
         `${side.toUpperCase()} order placed! (#${order.id}) — Risk checked ✓`,
-        { duration: 4000 }
+        { duration: 4000 },
       );
-      // Reset quantity after success
       setQuantity("0.001");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Order failed";
@@ -74,23 +72,23 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
   };
 
   return (
-    <div className="card-elevated flex flex-col h-full min-h-[440px] lg:min-h-0 overflow-hidden">
-      <div className="p-4 sm:p-5 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-white/[0.02]">
+    <div className="dash-card dash-card-glow flex flex-col min-h-[440px] overflow-hidden">
+      <div className="dash-section-head">
         <div>
-          <h3 className="font-display font-bold text-text-primary text-lg">Place Order</h3>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
-            {symbol.replace("USDT", "/USDT")} · Binance
+          <h3 className="dash-section-title">Place order</h3>
+          <p className="dash-section-sub">
+            {symbol.replace("USDT", "/USDT")} · {broker}
           </p>
         </div>
-        <div className="text-right px-3 py-2 rounded-xl bg-black/30 border border-white/[0.06]">
-          <p className="font-mono text-sm font-bold text-text-primary tabular-nums">
+        <div className="text-right px-3 py-2 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]">
+          <p className="dash-market-price text-sm">
             {currentPrice > 0 ? formatPrice(currentPrice) : "—"}
           </p>
           {liveTick && (
             <p
               className={cn(
                 "text-xs font-bold font-mono mt-0.5",
-                priceChange >= 0 ? "text-green-trade" : "text-red-trade",
+                priceChange >= 0 ? "text-[var(--auth-accent)]" : "text-[#f87171]",
               )}
             >
               {formatPercent(priceChange)}
@@ -99,92 +97,72 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
         </div>
       </div>
 
-      <div className="p-4 sm:p-5 flex-1 flex flex-col gap-5">
-        <div className="pill-tabs">
-          {(["market", "limit"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setOrderType(t)}
-              className={cn("pill-tab capitalize text-xs", orderType === t && "pill-tab-active")}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+      <div className="dash-body flex-1 flex flex-col gap-5 !pt-5">
+        <DashSegmented
+          options={[
+            { value: "market", label: "Market" },
+            { value: "limit", label: "Limit" },
+          ]}
+          value={orderType}
+          onChange={setOrderType}
+          columns={2}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setSide("buy")}
-            className={cn(
-              "py-3 flex items-center justify-center gap-2 rounded-xl font-bold border transition-all text-sm",
-              side === "buy"
-                ? "bg-green-trade/15 border-green-trade/40 text-green-trade shadow-[0_0_24px_rgba(16,185,129,0.15)]"
-                : "border-white/[0.06] text-text-muted hover:bg-white/[0.03]",
-            )}
+            className={cn("dash-side-btn", side === "buy" && "dash-side-btn-buy-active")}
           >
-            <ArrowUpCircle size={18} /> BUY
+            <ArrowUpCircle size={18} /> Buy
           </button>
           <button
             type="button"
             onClick={() => setSide("sell")}
-            className={cn(
-              "py-3 flex items-center justify-center gap-2 rounded-xl font-bold border transition-all text-sm",
-              side === "sell"
-                ? "bg-red-trade/15 border-red-trade/40 text-red-trade shadow-[0_0_24px_rgba(239,68,68,0.15)]"
-                : "border-white/[0.06] text-text-muted hover:bg-white/[0.03]",
-            )}
+            className={cn("dash-side-btn", side === "sell" && "dash-side-btn-sell-active")}
           >
-            <ArrowDownCircle size={18} /> SELL
+            <ArrowDownCircle size={18} /> Sell
           </button>
         </div>
 
-        {/* Inputs */}
         <div className="space-y-4 flex-1">
           {orderType === "limit" && (
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">
-                Limit Price (USDT)
+              <label className="dash-field-label" htmlFor="limit-price">
+                Limit price (USDT)
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={limitPrice}
-                  onChange={(e) => setLimitPrice(e.target.value)}
-                  placeholder={currentPrice > 0 ? currentPrice.toFixed(2) : "0.00"}
-                  className="input-field pr-12 font-mono"
-                  step="0.01"
-                />
-                <span className="absolute right-3 top-2.5 text-xs text-text-muted font-medium">USDT</span>
-              </div>
+              <input
+                id="limit-price"
+                type="number"
+                value={limitPrice}
+                onChange={(e) => setLimitPrice(e.target.value)}
+                placeholder={currentPrice > 0 ? currentPrice.toFixed(2) : "0.00"}
+                className="dash-input"
+                step="0.01"
+              />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1">
+            <label className="dash-field-label" htmlFor="qty">
               Quantity ({symbolBase(symbol)})
             </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="input-field pr-14 font-mono"
-                step="0.001"
-                min="0"
-              />
-              <span className="absolute right-3 top-2.5 text-xs text-text-muted font-medium">
-                {symbolBase(symbol)}
-              </span>
-            </div>
-            <div className="flex gap-1.5 mt-2">
+            <input
+              id="qty"
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="dash-input"
+              step="0.001"
+              min="0"
+            />
+            <div className="flex gap-1.5 mt-2.5">
               {[["25%", 0.25], ["50%", 0.5], ["75%", 0.75], ["Max", 1]].map(([label, pct]) => (
                 <button
                   key={label as string}
                   type="button"
                   onClick={() => setQuantityPct(pct as number)}
-                  className="flex-1 py-1.5 text-[10px] font-bold bg-black/30 hover:bg-brand/15 hover:text-brand text-text-muted rounded-lg border border-white/[0.05] transition-colors"
+                  className="flex-1 py-2 text-[10px] font-bold rounded-lg border border-[var(--auth-border)] text-[var(--auth-muted)] hover:text-[var(--auth-accent)] hover:border-[rgba(0,255,163,0.3)] hover:bg-[var(--auth-accent-dim)] transition-all"
                 >
                   {label as string}
                 </button>
@@ -193,29 +171,36 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
           </div>
         </div>
 
-        {/* Summary */}
-        <div className="mt-auto pt-5 border-t border-white/[0.06] space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-black/25 border border-white/[0.05]">
-            <span className="text-sm text-text-muted font-medium">Est. Total</span>
-            <span className="font-mono font-bold text-text-primary tabular-nums">
+        <div className="mt-auto pt-5 border-t border-[var(--auth-border)] space-y-4">
+          <div className="flex items-center justify-between p-3.5 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]">
+            <span className="text-sm text-[var(--auth-muted)]">Est. total</span>
+            <span className="font-mono font-semibold text-[var(--auth-text)] tabular-nums">
               ~ {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
             </span>
           </div>
 
-          <div className="flex items-start gap-2.5 p-3 bg-brand/8 rounded-xl text-brand text-xs border border-brand/15">
+          <div className="dash-info-banner">
             <Info size={15} className="shrink-0 mt-0.5" />
-            <p className="leading-relaxed">Risk Engine: Max position 2% · Auto Stop Loss 1.5% · Live WebSocket feed</p>
+            <p>Risk engine: max 2% position · 1.5% stop loss · live WebSocket</p>
           </div>
 
           <button
+            type="button"
             onClick={handleTrade}
             disabled={loading}
-            className={`${side === "buy" ? "btn-buy" : "btn-sell"} flex items-center justify-center gap-2 disabled:opacity-60`}
+            className={cn(
+              side === "buy" ? "dash-btn-buy" : "dash-btn-sell",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
           >
             {loading ? (
-              <><Loader2 size={16} className="animate-spin" /> Validating risk...</>
+              <span className="inline-flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin" /> Validating…
+              </span>
+            ) : side === "buy" ? (
+              "Execute buy"
             ) : (
-              <>{side === "buy" ? "Execute Buy" : "Execute Sell"}</>
+              "Execute sell"
             )}
           </button>
         </div>

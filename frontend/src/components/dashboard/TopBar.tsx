@@ -15,26 +15,26 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const prices = usePriceFeed(SYMBOLS);
 
   return (
-    <header className="h-14 sm:h-16 shrink-0 z-30 border-b border-white/[0.06] bg-bg-secondary/80 backdrop-blur-xl">
+    <header className="dash-topbar h-14 sm:h-[4.25rem] shrink-0 z-30">
       <div className="h-full flex items-center gap-2 px-3 sm:px-5">
         {onMenuClick && (
           <button
             type="button"
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-white/[0.05]"
+            className="lg:hidden p-2 rounded-[var(--auth-radius)] text-[var(--auth-muted)] hover:text-[var(--auth-text)] hover:bg-white/[0.04]"
             aria-label="Menu"
           >
             <Menu size={20} />
           </button>
         )}
 
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-trade/10 border border-green-trade/20">
-          <span className="live-dot" />
-          <span className="text-[11px] font-bold text-green-trade uppercase tracking-wide">Live</span>
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full dash-live-badge">
+          <span className="dash-live-dot" />
+          <span className="!text-[11px]">Live</span>
         </div>
 
         <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-5 sm:gap-6 w-max py-1">
+          <div className="flex items-center gap-5 sm:gap-7 w-max py-1">
             {SYMBOLS.map((symbol, i) => {
               const tick = prices[symbol];
               const price = tick ? parseFloat(tick.price) : null;
@@ -43,11 +43,11 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
               return (
                 <div key={symbol} className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs font-bold text-text-muted">{DISPLAY[i]}</span>
+                  <span className="dash-label !text-[10px]">{DISPLAY[i]}</span>
                   <span
                     className={cn(
                       "font-mono text-xs sm:text-sm font-semibold tabular-nums",
-                      isUp ? "text-green-trade" : "text-red-trade",
+                      isUp ? "text-[var(--auth-accent)]" : "text-[#f87171]",
                     )}
                   >
                     {price !== null ? formatPrice(price) : "…"}
@@ -55,8 +55,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                   {change !== null && (
                     <span
                       className={cn(
-                        "hidden md:inline-flex text-[10px] font-bold items-center gap-0.5 px-1.5 py-0.5 rounded",
-                        isUp ? "text-green-trade bg-green-trade/10" : "text-red-trade bg-red-trade/10",
+                        "hidden md:inline-flex text-[10px] font-bold items-center gap-0.5 px-1.5 py-0.5 rounded-md",
+                        isUp ? "dash-change-up" : "dash-change-down",
                       )}
                     >
                       {isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -70,29 +70,40 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <div className="hidden md:flex items-center gap-2 bg-bg-card/80 border border-white/[0.06] rounded-xl px-3 py-2">
-            <Search size={14} className="text-text-muted" />
+          <div className="hidden md:flex items-center gap-2 rounded-[var(--auth-radius)] px-3 py-2 border border-[var(--auth-border)] bg-[var(--auth-surface)]">
+            <Search size={14} className="text-[var(--auth-muted)]" />
             <input
               type="text"
               placeholder="Search…"
-              className="bg-transparent text-xs text-text-primary placeholder-text-muted outline-none w-20"
+              className="bg-transparent text-xs text-[var(--auth-text)] placeholder-[var(--auth-muted)] outline-none w-24"
             />
           </div>
           <button
             type="button"
-            className="relative p-2.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-white/[0.05]"
+            className="relative p-2.5 rounded-[var(--auth-radius)] text-[var(--auth-muted)] hover:text-[var(--auth-text)] hover:bg-white/[0.04] transition-colors"
           >
             <Bell size={17} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-brand rounded-full ring-2 ring-bg-secondary" />
+            <span
+              className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-[var(--auth-bg)]"
+              style={{ background: "var(--auth-accent)" }}
+            />
           </button>
           <button
             type="button"
-            className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-white/[0.05] border border-transparent hover:border-white/[0.06]"
+            className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-[var(--auth-radius)] hover:bg-white/[0.04] border border-transparent hover:border-[var(--auth-border)] transition-all"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow">
-              <User size={14} className="text-white" />
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, #00ffa3 0%, #00e693 100%)",
+                boxShadow: "0 0 16px rgba(0, 255, 163, 0.35)",
+              }}
+            >
+              <User size={14} style={{ color: "#041510" }} />
             </div>
-            <span className="hidden md:block text-xs font-semibold text-text-primary">Trader</span>
+            <span className="hidden md:block text-xs font-semibold text-[var(--auth-text)]">
+              Trader
+            </span>
           </button>
         </div>
       </div>
