@@ -25,17 +25,15 @@ export function SymbolSelect({
 }: SymbolSelectProps) {
   if (variant === "pills") {
     return (
-      <div className={cn("flex flex-wrap gap-1", className)}>
+      <div className={cn("dash-symbol-pills", className)}>
         {TRADING_SYMBOLS.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => onChange(s)}
             className={cn(
-              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
-              value === s
-                ? "bg-brand text-white"
-                : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary",
+              "dash-symbol-pill",
+              value === s && "dash-symbol-pill-active",
             )}
           >
             {symbolLabel(s).split("/")[0]}

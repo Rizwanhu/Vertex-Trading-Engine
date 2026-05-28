@@ -22,13 +22,13 @@ export function WinLossPie({ pnl }: PerformanceChartsProps) {
   const wins = pnl?.winning_trades ?? 0;
   const losses = pnl ? pnl.total_trades - pnl.winning_trades : 0;
   const data = [
-    { name: "Wins", value: wins, color: "#10b981" },
-    { name: "Losses", value: losses, color: "#ef4444" },
+    { name: "Wins", value: wins, color: "#00ffa3" },
+    { name: "Losses", value: losses, color: "#f87171" },
   ].filter((d) => d.value > 0);
 
   if (!pnl || pnl.total_trades === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-sm text-text-muted">
+      <div className="dash-chart-empty">
         No trades to chart
       </div>
     );
@@ -65,12 +65,12 @@ export function PnLBarChart({ pnl }: PerformanceChartsProps) {
     {
       name: "Today",
       value: pnl?.today_pnl ?? 0,
-      fill: (pnl?.today_pnl ?? 0) >= 0 ? "#10b981" : "#ef4444",
+      fill: (pnl?.today_pnl ?? 0) >= 0 ? "#00ffa3" : "#f87171",
     },
     {
       name: "Total",
       value: pnl?.total_pnl ?? 0,
-      fill: (pnl?.total_pnl ?? 0) >= 0 ? "#10b981" : "#ef4444",
+      fill: (pnl?.total_pnl ?? 0) >= 0 ? "#00ffa3" : "#f87171",
     },
   ];
 

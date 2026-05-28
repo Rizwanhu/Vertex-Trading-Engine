@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Key, Shield, Bell, Database, Settings2 } from "lucide-react";
-import { HeroBanner } from "@/components/ui/HeroBanner";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { motion, AnimatePresence } from "framer-motion";
+import { Key, Shield, Bell, Database, Settings2, Plus, Unplug } from "lucide-react";
+import { DashSection } from "@/components/dashboard/ui/DashSection";
+import { DashToggle } from "@/components/dashboard/ui/DashToggle";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -14,112 +14,176 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+const RISK_FIELDS = [
+  { label: "Max Position Size (%)", hint: "Maximum % of portfolio per trade", default: "2.0" },
+  { label: "Daily Loss Limit (%)", hint: "Halt all trading if exceeded", default: "5.0" },
+  { label: "Default Stop Loss (%)", hint: "Applied to new bots automatically", default: "1.5" },
+  { label: "Max Open Trades", hint: "Concurrent positions allowed", default: "5" },
+];
+
+const tabMotion = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6 },
+  transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+};
+
 export default function SettingsPage() {
   const [tab, setTab] = useState<TabId>("api");
   const [telegramOn, setTelegramOn] = useState(true);
 
   return (
-    <div className="page-container max-w-4xl">
-      <HeroBanner
-        badge="Configuration"
-        title={
-          <>
-            Account <span className="text-gradient">Settings</span>
-          </>
-        }
-        description="Manage broker connections, global risk limits, and notification preferences."
-      />
+    <div className="dash-settings-page">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="dash-settings-hero"
+      >
+        <div className="dash-settings-hero-main">
+          <span className="dash-live-badge">
+            <span className="dash-live-dot" />
+            Configuration
+          </span>
+          <h1 className="dash-settings-hero-title">
+            Account <span>Settings</span>
+          </h1>
+          <p className="dash-subheading">
+            Manage broker connections, global risk limits, and notification preferences for your
+            workspace.
+          </p>
+        </div>
+        <div className="dash-settings-hero-meta">
+          <div className="dash-hero-stat-pill">
+            <span className="dash-label">Brokers</span>
+            <p className="dash-hero-stat-value">Binance</p>
+          </div>
+          <div className="dash-hero-stat-pill">
+            <span className="dash-label">Mode</span>
+            <p className="dash-hero-stat-value">Production</p>
+          </div>
+        </div>
+      </motion.section>
 
-      <div className="pill-tabs max-w-md">
+      <nav className="dash-settings-tabs" aria-label="Settings sections">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={cn("pill-tab flex items-center justify-center gap-2", tab === id && "pill-tab-active")}
+            className={cn(
+              "dash-settings-tab",
+              tab === id && "dash-settings-tab-active",
+            )}
           >
-            <Icon size={15} />
+            <Icon size={15} strokeWidth={2.25} />
             {label}
           </button>
         ))}
-      </div>
+      </nav>
 
-      {tab === "api" && (
-        <SectionCard title="Broker API Keys" icon={Key} glow>
-          <p className="text-sm text-text-muted mb-5">Connect exchanges for live trading and portfolio sync.</p>
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-xl bg-black/25 border border-white/[0.06] hover:border-brand/20 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/25 flex items-center justify-center text-yellow-400 font-display font-bold text-xl">
-                  B
-                </div>
+      <AnimatePresence mode="wait">
+        {tab === "api" && (
+          <motion.div key="api" className="dash-settings-content" {...tabMotion}>
+            <DashSection title="Broker API Keys" icon={Key} glow>
+              <p className="dash-settings-lead">
+                Connect exchanges for live trading and portfolio sync.
+              </p>
+              <div className="dash-broker-list">
+                <article className="dash-broker-card">
+                  <div className="dash-broker-card-main">
+                    <div className="dash-broker-logo dash-broker-logo--binance" aria-hidden>
+                      B
+                    </div>
+                    <div className="dash-broker-info">
+                      <h4 className="dash-broker-name">Binance</h4>
+                      <p className="dash-broker-meta">
+                        <span className="dash-live-dot dash-broker-dot" />
+                        Production · Added May 2026
+                      </p>
+                    </div>
+                  </div>
+                  <button type="button" className="dash-btn-disconnect">
+                    <Unplug size={14} />
+                    Disconnect
+                  </button>
+                </article>
+                <button type="button" className="dash-broker-add">
+                  <Plus size={18} strokeWidth={2.25} />
+                  Add new API key
+                </button>
+              </div>
+            </DashSection>
+          </motion.div>
+        )}
+
+        {tab === "risk" && (
+          <motion.div key="risk" className="dash-settings-content" {...tabMotion}>
+            <DashSection title="Global Risk Limits" icon={Shield} glow>
+              <p className="dash-settings-lead">
+                These limits apply to all manual trades and new bots.
+              </p>
+              <div className="dash-settings-form-grid">
+                {RISK_FIELDS.map((field) => (
+                  <div key={field.label} className="dash-settings-field">
+                    <label className="dash-field-label">{field.label}</label>
+                    <input
+                      type="number"
+                      defaultValue={field.default}
+                      className="dash-input"
+                      step="0.1"
+                    />
+                    <p className="dash-settings-hint">{field.hint}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="dash-settings-actions">
+                <button type="button" className="dash-btn-primary">
+                  Save risk settings
+                </button>
+              </div>
+            </DashSection>
+          </motion.div>
+        )}
+
+        {tab === "notify" && (
+          <motion.div key="notify" className="dash-settings-content" {...tabMotion}>
+            <DashSection title="Notifications" icon={Bell} glow>
+              <div className="dash-settings-toggle-row">
                 <div>
-                  <h4 className="font-semibold text-text-primary">Binance</h4>
-                  <p className="text-xs text-text-muted mt-0.5 flex items-center gap-2">
-                    <span className="live-dot" /> Production · Added May 2026
+                  <p className="dash-settings-toggle-title">Telegram alerts</p>
+                  <p className="dash-settings-toggle-desc">
+                    Execution confirmations and error notifications
                   </p>
                 </div>
+                <DashToggle
+                  checked={telegramOn}
+                  onChange={() => setTelegramOn(!telegramOn)}
+                  aria-label="Toggle Telegram alerts"
+                />
               </div>
-              <button type="button" className="text-xs font-bold text-red-trade hover:bg-red-trade/10 px-4 py-2 rounded-lg border border-red-trade/20 transition-colors self-start">
-                Disconnect
-              </button>
-            </div>
-            <button
-              type="button"
-              className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-text-secondary hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all flex items-center justify-center gap-2 font-semibold text-sm"
-            >
-              + Add New API Key
-            </button>
-          </div>
-        </SectionCard>
-      )}
-
-      {tab === "risk" && (
-        <SectionCard title="Global Risk Limits" icon={Shield} glow>
-          <p className="text-sm text-text-muted mb-6">These limits apply to all manual trades and new bots.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-            {[
-              { label: "Max Position Size (%)", hint: "Maximum % of portfolio per trade", default: "2.0" },
-              { label: "Daily Loss Limit (%)", hint: "Halt all trading if exceeded", default: "5.0" },
-              { label: "Default Stop Loss (%)", hint: "Applied to new bots automatically", default: "1.5" },
-              { label: "Max Open Trades", hint: "Concurrent positions allowed", default: "5" },
-            ].map((field) => (
-              <div key={field.label} className="space-y-2">
-                <label className="block text-sm font-semibold text-text-primary">{field.label}</label>
-                <input type="number" defaultValue={field.default} className="input-field" step="0.1" />
-                <p className="text-xs text-text-muted">{field.hint}</p>
+              <div className="dash-settings-field dash-settings-field--spaced">
+                <label className="dash-field-label">Telegram chat ID</label>
+                <input
+                  type="text"
+                  placeholder="@your_username or chat ID"
+                  className="dash-input dash-input--narrow"
+                  disabled={!telegramOn}
+                />
+                <p className="dash-settings-hint">
+                  Use your @username or numeric chat ID from BotFather.
+                </p>
               </div>
-            ))}
-          </div>
-          <div className="mt-8 flex justify-end">
-            <button type="button" className="btn-primary px-8">Save Risk Settings</button>
-          </div>
-        </SectionCard>
-      )}
+            </DashSection>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {tab === "notify" && (
-        <SectionCard title="Notifications" icon={Bell} glow>
-          <div className="flex items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-black/20 border border-white/[0.05] mb-5">
-            <div>
-              <p className="font-semibold text-text-primary">Telegram Alerts</p>
-              <p className="text-xs text-text-muted mt-1">Execution confirmations and error notifications</p>
-            </div>
-            <ToggleSwitch checked={telegramOn} onChange={() => setTelegramOn(!telegramOn)} />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2 block">
-              Telegram Chat ID
-            </label>
-            <input type="text" placeholder="@your_username or chat ID" className="input-field max-w-md" />
-          </div>
-        </SectionCard>
-      )}
-
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] text-text-muted text-sm">
-        <Settings2 size={16} className="text-brand shrink-0" />
-        <Database size={16} className="shrink-0 opacity-50" />
+      <footer className="dash-settings-footnote">
+        <Settings2 size={16} className="dash-settings-footnote-icon" />
+        <Database size={16} className="dash-settings-footnote-icon dash-settings-footnote-icon--muted" />
         <span>Settings sync to backend when API endpoints are connected.</span>
-      </div>
+      </footer>
     </div>
   );
 }

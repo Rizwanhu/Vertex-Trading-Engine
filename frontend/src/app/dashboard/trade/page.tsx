@@ -1,14 +1,15 @@
 "use client";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { TradingChart } from "@/components/charts/TradingChart";
 import { ChartHeader } from "@/components/charts/ChartHeader";
 import { TradePanel } from "@/components/dashboard/TradePanel";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
-import { HeroBanner } from "@/components/ui/HeroBanner";
-import { SectionCard } from "@/components/ui/SectionCard";
+import { DashSubHero } from "@/components/dashboard/ui/DashSubHero";
+import { DashSection } from "@/components/dashboard/ui/DashSection";
 import { SymbolSelect } from "@/components/ui/SymbolSelect";
 import { useSymbolPrice } from "@/lib/usePriceFeed";
-import { formatPrice, formatPercent } from "@/lib/format";
+import { formatPrice, formatPercent, symbolLabel } from "@/lib/format";
 import { CandlestickChart, Layers } from "lucide-react";
 
 export default function TradePage() {
@@ -19,80 +20,104 @@ export default function TradePage() {
   const change = tick ? parseFloat(tick.change) : 0;
 
   return (
-    <div className="page-container">
-      <HeroBanner
+    <div className="dash-subpage dash-trade-page">
+      <DashSubHero
         badge="Execution"
         title={
           <>
-            <span className="text-gradient">Trade</span> Desk
+            <span>Trade</span> desk
           </>
         }
         description="Professional charting workspace with instant order entry and live WebSocket pricing."
         stats={[
-          { label: "Pair", value: symbol.replace("USDT", "/USDT") },
+          { label: "Pair", value: symbolLabel(symbol) },
           { label: "Price", value: price > 0 ? formatPrice(price) : "—" },
-          {
-            label: "24h",
-            value: tick ? formatPercent(change) : "—",
-          },
+          { label: "24h", value: tick ? formatPercent(change) : "—" },
         ]}
       />
 
-      <div className="flex flex-wrap gap-2 p-1 rounded-2xl bg-black/20 border border-white/[0.05] w-fit">
-        <SymbolSelect value={symbol} onChange={setSymbol} variant="pills" />
-      </div>
+      <section className="dash-subpage-section">
+        <div className="dash-symbol-bar">
+          <SymbolSelect value={symbol} onChange={setSymbol} variant="pills" />
+          <span className="dash-live-badge">
+            <span className="dash-live-dot" />
+            Live feed
+          </span>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 lg:gap-6">
-        <SectionCard
-          title="Chart"
-          icon={CandlestickChart}
-          noPadding
-          glow
-          className="min-h-[520px] lg:min-h-[640px]"
-        >
-          <ChartHeader
-            symbol={symbol}
-            tick={tick}
-            timeframe={timeframe}
-            onTimeframeChange={setTimeframe}
-            timeframes={["1m", "5m", "15m", "1h", "4h", "1d", "1w"]}
-            className="border-b border-white/[0.06] !bg-transparent"
-          />
-          <div className="flex-1 min-h-[420px]">
-            <TradingChart symbol={symbol} timeframe={timeframe} />
-          </div>
-        </SectionCard>
-
-        <div className="space-y-4">
-          <TradePanel symbol={symbol} broker="binance" />
-          <div className="bento-card">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers size={16} className="text-brand" />
-              <span className="section-title">Session Info</span>
+      <section className="dash-subpage-section dash-trade-layout">
+        <div className="dash-chart-stage">
+          <DashSection
+            title="Live chart"
+            subtitle={`${symbol.replace("USDT", "/USDT")} · ${timeframe}`}
+            icon={CandlestickChart}
+            glow
+            flush
+            className="h-full flex flex-col"
+            action={
+              <span className="dash-live-badge">
+                <span className="dash-live-dot" />
+                Real-time
+              </span>
+            }
+          >
+            <ChartHeader
+              symbol={symbol}
+              tick={tick}
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframes={["1m", "5m", "15m", "1h", "4h", "1d", "1w"]}
+            />
+            <div className="dash-chart-wrap">
+              <div className="dash-chart-glow" aria-hidden />
+              <TradingChart symbol={symbol} timeframe={timeframe} />
             </div>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-white/[0.05]">
-                <dt className="text-text-muted">Broker</dt>
-                <dd className="font-semibold text-text-primary">Binance</dd>
+          </DashSection>
+        </div>
+
+        <div className="dash-trade-sidebar">
+          <TradePanel symbol={symbol} broker="binance" />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
+            className="dash-session-card dash-card"
+          >
+            <div className="dash-section-head dash-section-head--compact">
+              <h3 className="dash-section-title">
+                <span className="dash-section-icon">
+                  <Layers size={16} strokeWidth={2.5} />
+                </span>
+                Session info
+              </h3>
+            </div>
+            <dl className="dash-session-list">
+              <div className="dash-session-row">
+                <dt>Broker</dt>
+                <dd>Binance</dd>
               </div>
-              <div className="flex justify-between py-2 border-b border-white/[0.05]">
-                <dt className="text-text-muted">Timeframe</dt>
-                <dd className="font-mono font-bold text-brand">{timeframe}</dd>
+              <div className="dash-session-row">
+                <dt>Timeframe</dt>
+                <dd className="dash-session-mono">{timeframe}</dd>
               </div>
-              <div className="flex justify-between py-2">
-                <dt className="text-text-muted">Feed</dt>
-                <dd className="flex items-center gap-1.5 text-green-trade font-semibold text-xs">
-                  <span className="live-dot" /> WebSocket
+              <div className="dash-session-row">
+                <dt>Feed</dt>
+                <dd className="dash-session-live">
+                  <span className="dash-live-dot" />
+                  WebSocket
                 </dd>
               </div>
             </dl>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </section>
 
-      <SectionCard title="Order Book & History" noPadding className="min-h-[340px]">
-        <OrdersTable />
-      </SectionCard>
+      <section className="dash-subpage-section">
+        <DashSection title="Order history" subtitle="Open positions & fills" glow flush className="dash-orders-panel">
+          <OrdersTable />
+        </DashSection>
+      </section>
     </div>
   );
 }

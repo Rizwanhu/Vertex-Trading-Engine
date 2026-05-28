@@ -26,10 +26,17 @@ export function MetricRing({
   const offset = circ - (pct / 100) * circ;
 
   return (
-    <div className={cn("flex flex-col items-center", className)}>
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={8} className="metric-ring-track" />
+    <div className={cn("dash-metric-ring", className)}>
+      <div className="dash-metric-ring-svg-wrap" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="dash-metric-ring-svg">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            strokeWidth={8}
+            className="dash-metric-ring-track"
+          />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -41,16 +48,16 @@ export function MetricRing({
             strokeDasharray={circ}
             strokeDashoffset={offset}
             style={{ filter: `drop-shadow(0 0 8px ${color}66)` }}
-            className="transition-all duration-700"
+            className="dash-metric-ring-progress"
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-display text-2xl font-bold text-text-primary tabular-nums">{value}</span>
-          {max === 100 && <span className="text-[10px] text-text-muted font-bold">%</span>}
+        <div className="dash-metric-ring-center">
+          <span className="dash-metric-ring-value">{value}</span>
+          {max === 100 && <span className="dash-metric-ring-unit">%</span>}
         </div>
       </div>
-      <p className="text-xs font-semibold text-text-primary mt-2">{label}</p>
-      {sublabel && <p className="text-[10px] text-text-muted">{sublabel}</p>}
+      <p className="dash-metric-ring-label">{label}</p>
+      {sublabel && <p className="dash-metric-ring-sublabel">{sublabel}</p>}
     </div>
   );
 }
