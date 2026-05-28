@@ -151,15 +151,15 @@ export function OrdersTable() {
             <Loader2 size={22} className="animate-spin" style={{ color: "var(--auth-accent)" }} />
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-            <Inbox size={32} className="text-[var(--auth-muted)] mb-3" />
-            <p className="text-sm font-semibold text-[var(--auth-text)]">
-              No {tab === "open" ? "open" : "historical"} orders
-            </p>
-            <p className="text-xs text-[var(--auth-muted)] mt-1 max-w-xs">
+          <div className="dash-empty-state">
+            <div className="dash-empty-state-icon">
+              <Inbox size={22} />
+            </div>
+            <h4>No {tab === "open" ? "open" : "historical"} orders</h4>
+            <p>
               {tab === "open"
-                ? "Place a trade from the panel to get started."
-                : "Filled orders appear here."}
+                ? "Place a trade from the panel on the right to get started."
+                : "Filled and cancelled orders appear here."}
             </p>
           </div>
         ) : (

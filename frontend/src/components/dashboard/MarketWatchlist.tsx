@@ -54,7 +54,9 @@ export function MarketWatchlist({ activeSymbol, onSelect }: MarketWatchlistProps
                     <p className="text-[10px] text-[var(--auth-muted)] mt-0.5">{short}/USDT</p>
                   </div>
                 </div>
-                <MiniSparkline positive={isUp} accent />
+                <div className="dash-sparkline-wrap">
+                  <MiniSparkline positive={isUp} accent size="sm" />
+                </div>
               </div>
               <div className="flex items-center justify-between pl-11">
                 <span className="dash-market-price">

@@ -1,15 +1,15 @@
 "use client";
 import { usePriceFeed } from "@/lib/usePriceFeed";
-import { formatPercent, formatPrice } from "@/lib/format";
+import { formatPercent, formatPrice, symbolLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { MiniSparkline } from "@/components/charts/MiniSparkline";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 const PAIRS = [
-  { symbol: "BTCUSDT", label: "Bitcoin", short: "BTC" },
-  { symbol: "ETHUSDT", label: "Ethereum", short: "ETH" },
-  { symbol: "SOLUSDT", label: "Solana", short: "SOL" },
-  { symbol: "BNBUSDT", label: "BNB", short: "BNB" },
+  { symbol: "BTCUSDT", short: "BTC" },
+  { symbol: "ETHUSDT", short: "ETH" },
+  { symbol: "SOLUSDT", short: "SOL" },
+  { symbol: "BNBUSDT", short: "BNB" },
 ];
 
 interface MarketStripProps {
@@ -19,49 +19,85 @@ interface MarketStripProps {
 
 export function MarketStrip({ activeSymbol, onSelect }: MarketStripProps) {
   const prices = usePriceFeed(PAIRS.map((p) => p.symbol));
+  const active = PAIRS.find((p) => p.symbol === activeSymbol) ?? PAIRS[0];
+  const activeTick = prices[active.symbol];
+  const activePrice = activeTick ? parseFloat(activeTick.price) : null;
+  const activeChange = activeTick ? parseFloat(activeTick.change) : null;
+  const activeUp = activeChange !== null ? activeChange >= 0 : true;
 
   return (
-    <div className="grid grid-cols-2 gap-2.5">
-      {PAIRS.map(({ symbol, label, short }) => {
-        const tick = prices[symbol];
-        const price = tick ? parseFloat(tick.price) : null;
-        const change = tick ? parseFloat(tick.change) : null;
-        const isUp = change !== null ? change >= 0 : true;
-        const active = activeSymbol === symbol;
-        const Tag = onSelect ? "button" : "div";
+    <div className="flex flex-col gap-2">
+      {/* Featured active pair — full width */}
+      <button
+        type="button"
+        onClick={() => onSelect?.(active.symbol)}
+        className="dash-market-tile dash-market-tile-hero is-active"
+      >
+        <div className="dash-market-tile-top">
+          <div className="text-left">
+            <p className="dash-label">{active.short}</p>
+            <p className="dash-market-symbol text-base">{symbolLabel(active.symbol)}</p>
+          </div>
+          <div className="dash-sparkline-wrap">
+            <MiniSparkline positive={activeUp} accent size="sm" />
+          </div>
+        </div>
+        <div className="flex items-end justify-between gap-2 mt-1">
+          <span className="dash-hero-price !text-xl">
+            {activePrice !== null ? formatPrice(activePrice) : "—"}
+          </span>
+          {activeChange !== null && (
+            <span
+              className={cn(
+                "dash-change-pill",
+                activeUp ? "dash-change-up" : "dash-change-down",
+              )}
+            >
+              {activeUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {formatPercent(activeChange)}
+            </span>
+          )}
+        </div>
+      </button>
 
-        return (
-          <Tag
-            key={symbol}
-            type={onSelect ? "button" : undefined}
-            onClick={onSelect ? () => onSelect(symbol) : undefined}
-            className={cn(
-              "dash-market-row !p-3",
-              active && "dash-market-row-active",
-            )}
-          >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="text-left">
-                <p className="dash-label">{short}</p>
-                <p className="text-xs text-[var(--auth-muted)] mt-0.5">{label}</p>
+      {/* Other pairs — horizontal scroll */}
+      <div className="dash-market-scroll">
+        {PAIRS.filter((p) => p.symbol !== activeSymbol).map(({ symbol, short }) => {
+          const tick = prices[symbol];
+          const price = tick ? parseFloat(tick.price) : null;
+          const change = tick ? parseFloat(tick.change) : null;
+          const isUp = change !== null ? change >= 0 : true;
+
+          return (
+            <button
+              key={symbol}
+              type="button"
+              onClick={() => onSelect?.(symbol)}
+              className="dash-market-tile"
+            >
+              <div className="dash-market-tile-top">
+                <span className="dash-label">{short}</span>
+                <div className="dash-sparkline-wrap">
+                  <MiniSparkline positive={isUp} accent size="sm" />
+                </div>
               </div>
-              <MiniSparkline positive={isUp} accent />
-            </div>
-            <p className="dash-market-price text-base">{price !== null ? formatPrice(price) : "—"}</p>
-            {change !== null && (
-              <p
-                className={cn(
-                  "flex items-center gap-1 text-[11px] font-bold mt-1.5",
-                  isUp ? "text-[var(--auth-accent)]" : "text-[#f87171]",
-                )}
-              >
-                {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                {formatPercent(change)}
-              </p>
-            )}
-          </Tag>
-        );
-      })}
+              <span className="dash-market-price text-sm">
+                {price !== null ? formatPrice(price) : "—"}
+              </span>
+              {change !== null && (
+                <span
+                  className={cn(
+                    "text-[10px] font-bold mt-1",
+                    isUp ? "text-[var(--auth-accent)]" : "text-[#f87171]",
+                  )}
+                >
+                  {formatPercent(change)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

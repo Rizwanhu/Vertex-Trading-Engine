@@ -12,7 +12,7 @@ import { DepthBook } from "@/components/dashboard/DepthBook";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashStatCard } from "@/components/dashboard/ui/DashStatCard";
 import { DashSection } from "@/components/dashboard/ui/DashSection";
-import { Activity, Wallet, Bot, TrendingUp, CandlestickChart, Layers3 } from "lucide-react";
+import { Activity, Wallet, Bot, TrendingUp, Layers3 } from "lucide-react";
 import { api, Balance, PnL, Bot as BotType } from "@/lib/api";
 import { useSymbolPrice } from "@/lib/usePriceFeed";
 import { formatCurrency, formatSignedCurrency, formatPercent } from "@/lib/format";
@@ -109,16 +109,12 @@ export default function DashboardOverview() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
           className="flex flex-wrap gap-2"
         >
           {bots.slice(0, 8).map((b) => (
             <span
               key={b.id}
-              className={cn(
-                "dash-chip",
-                b.status === "running" && "dash-chip-active",
-              )}
+              className={cn("dash-chip", b.status === "running" && "dash-chip-active")}
             >
               {b.status === "running" && <span className="dash-live-dot" />}
               {b.name}
@@ -127,67 +123,61 @@ export default function DashboardOverview() {
         </motion.div>
       )}
 
+      {/* Mobile markets */}
       <div className="lg:hidden">
-        <DashSection title="Markets" subtitle="Tap a pair to switch chart" flush>
-          <div className="p-3">
-            <MarketStrip activeSymbol={symbol} onSelect={setSymbol} />
-          </div>
-        </DashSection>
+        <MarketStrip activeSymbol={symbol} onSelect={setSymbol} />
       </div>
 
-      <div className="dash-trade-grid">
-        <div className="hidden xl:block">
-          <DashSection
-            title="Watchlist"
-            subtitle="Live WebSocket feed"
-            className="h-full min-h-[640px]"
-            glow
-            flush
-          >
+      <div className="dash-workspace">
+        <div className="dash-workspace-watchlist">
+          <DashSection title="Markets" subtitle="Select pair" glow flush className="h-full">
             <MarketWatchlist activeSymbol={symbol} onSelect={setSymbol} />
           </DashSection>
         </div>
 
-        <DashSection
-          title="Price chart"
-          subtitle={`${symbol.replace("USDT", "/USDT")} · ${timeframe}`}
-          icon={CandlestickChart}
-          glow
-          flush
-          action={
-            <span className="dash-live-badge">
-              <span className="dash-live-dot" />
-              Real-time
-            </span>
-          }
-        >
-          <ChartHeader
-            symbol={symbol}
-            tick={tick}
-            timeframe={timeframe}
-            onTimeframeChange={setTimeframe}
-            marketStats={marketStats}
-            timeframes={["1m", "5m", "15m", "1h", "4h", "1d", "1w"]}
-          />
-          <div className="dash-chart-wrap">
-            <div className="dash-chart-glow" aria-hidden />
-            <TradingChart
-              symbol={symbol}
-              timeframe={timeframe}
-              onMarketStats={setMarketStats}
-              className="!min-h-[360px] lg:!min-h-[400px]"
-            />
+        <div className="dash-workspace-center">
+          <div className="dash-chart-stage">
+            <DashSection
+              title="Live chart"
+              subtitle={`${symbol.replace("USDT", "/USDT")} · ${timeframe}`}
+              glow
+              flush
+              className="h-full flex flex-col"
+              action={
+                <span className="dash-live-badge">
+                  <span className="dash-live-dot" />
+                  Real-time
+                </span>
+              }
+            >
+              <ChartHeader
+                symbol={symbol}
+                tick={tick}
+                timeframe={timeframe}
+                onTimeframeChange={setTimeframe}
+                marketStats={marketStats}
+                timeframes={["1m", "5m", "15m", "1h", "4h", "1d", "1w"]}
+              />
+              <div className="dash-chart-wrap">
+                <div className="dash-chart-glow" aria-hidden />
+                <TradingChart
+                  symbol={symbol}
+                  timeframe={timeframe}
+                  onMarketStats={setMarketStats}
+                />
+              </div>
+              <div className="dash-orderbook-panel">
+                <div className="dash-orderbook-head">
+                  <span className="dash-section-title !text-xs">Order book</span>
+                  <span className="text-[10px] text-[var(--auth-muted)]">Depth preview</span>
+                </div>
+                <DepthBook price={livePrice} />
+              </div>
+            </DashSection>
           </div>
-          <div className="border-t border-[var(--auth-border)]">
-            <div className="dash-section-head !py-2.5 !px-4">
-              <span className="dash-label">Order book</span>
-              <span className="text-[10px] text-[var(--auth-muted)]">Depth preview</span>
-            </div>
-            <DepthBook price={livePrice} />
-          </div>
-        </DashSection>
+        </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="dash-workspace-trade">
           <TradePanel symbol={symbol} broker="binance" />
           <div className="hidden xl:block dash-card dash-card-glow">
             <div className="dash-section-head">
@@ -198,14 +188,14 @@ export default function DashboardOverview() {
                 Portfolio
               </h3>
             </div>
-            <div className="dash-body !pt-4">
+            <div className="dash-portfolio-body">
               <PortfolioPanel compact />
             </div>
           </div>
         </div>
       </div>
 
-      <DashSection title="Recent orders" subtitle="Open positions & history" flush>
+      <DashSection title="Recent orders" subtitle="Open positions & history" glow flush>
         <OrdersTable />
       </DashSection>
     </>

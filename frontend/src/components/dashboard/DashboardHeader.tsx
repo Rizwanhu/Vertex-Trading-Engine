@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Bot, Zap } from "lucide-react";
+import { ArrowUpRight, Zap } from "lucide-react";
 import { symbolLabel, formatPercent, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PriceTick } from "@/lib/usePriceFeed";
@@ -27,13 +27,13 @@ export function DashboardHeader({
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="dash-hero"
     >
-      <div className="flex flex-col gap-4 min-w-0 flex-1">
-        <div className="flex items-center gap-3 flex-wrap">
+      <div className="dash-hero-main">
+        <div className="dash-hero-top">
           <div className="auth-brand">
             <div className="auth-brand-dot" />
             <span className="auth-brand-name">AlgoTrader</span>
@@ -45,8 +45,8 @@ export function DashboardHeader({
         </div>
 
         <div>
-          <p className="dash-label mb-2">Active pair</p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+          <p className="dash-label">Active pair</p>
+          <div className="dash-hero-pair-row">
             <h1 className="dash-heading">{symbolLabel(symbol)}</h1>
             <span className="dash-hero-price">
               {price > 0 ? formatPrice(price) : "—"}
@@ -62,18 +62,15 @@ export function DashboardHeader({
               </span>
             )}
           </div>
-          <p className="dash-subheading mt-2">
-            Monitor markets, execute trades, and supervise your automated strategies in one workspace.
-          </p>
         </div>
 
-        <div className="flex flex-wrap gap-6 sm:gap-10 pt-2 border-t border-[var(--auth-border)]">
+        <div className="dash-hero-stats-row">
           {[
             { label: "Balance", value: balance },
             { label: "Today P&L", value: todayPnl },
             { label: "Bots live", value: botsLive },
           ].map((s) => (
-            <div key={s.label} className="dash-hero-stat">
+            <div key={s.label} className="dash-hero-stat-pill">
               <span className="dash-label">{s.label}</span>
               <p className="dash-hero-stat-value">{s.value}</p>
             </div>
@@ -81,12 +78,12 @@ export function DashboardHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2.5 shrink-0">
+      <div className="dash-hero-actions">
         <Link href="/dashboard/trade" className="dash-btn-primary">
           <Zap size={16} /> Quick trade
         </Link>
         <Link href="/dashboard/bots" className="dash-btn-ghost">
-          Manage bots <ArrowUpRight size={14} />
+          Bots <ArrowUpRight size={14} />
         </Link>
       </div>
     </motion.header>

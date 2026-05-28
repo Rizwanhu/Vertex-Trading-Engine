@@ -17,7 +17,6 @@ import toast from "react-hot-toast";
 import { api, Bot as BotType, BotStats, Strategy } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatSignedCurrency } from "@/lib/format";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { TRADING_SYMBOLS } from "@/components/ui/SymbolSelect";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"];
@@ -26,15 +25,22 @@ const STRATEGY_PRESETS = [
   { name: "MA Crossover", config: { strategy_name: "ma_crossover", fast_period: 9, slow_period: 21 } },
 ];
 
-const STATUS_COLOR: Record<string, string> = {
-  running: "text-green-trade bg-green-trade/10 border-green-trade/30",
-  stopped: "text-text-muted bg-bg-secondary border-bg-border",
-  idle: "text-text-secondary bg-bg-secondary border-bg-border",
-  paused: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
-  error: "text-red-trade bg-red-trade/10 border-red-trade/30",
-};
+function statusClass(status: string): string {
+  const map: Record<string, string> = {
+    running: "dash-bot-status--running",
+    stopped: "dash-bot-status--stopped",
+    idle: "dash-bot-status--idle",
+    paused: "dash-bot-status--paused",
+    error: "dash-bot-status--error",
+  };
+  return map[status] ?? "dash-bot-status--idle";
+}
 
-export function BotPanel() {
+interface BotPanelProps {
+  onBotsChange?: (bots: BotType[]) => void;
+}
+
+export function BotPanel({ onBotsChange }: BotPanelProps) {
   const [bots, setBots] = useState<BotType[]>([]);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [statsMap, setStatsMap] = useState<Record<number, BotStats>>({});
@@ -48,10 +54,18 @@ export function BotPanel() {
   const [formStrategyId, setFormStrategyId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
 
+  const updateBots = useCallback(
+    (list: BotType[]) => {
+      setBots(list);
+      onBotsChange?.(list);
+    },
+    [onBotsChange],
+  );
+
   const fetchAll = useCallback(async () => {
     try {
       const [botList, stratList] = await Promise.all([api.bots.list(), api.strategies.list()]);
-      setBots(botList);
+      updateBots(botList);
       setStrategies(stratList);
 
       const statsEntries = await Promise.all(
@@ -78,7 +92,7 @@ export function BotPanel() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [updateBots]);
 
   useEffect(() => {
     fetchAll();
@@ -198,53 +212,61 @@ export function BotPanel() {
   const runningCount = bots.filter((b) => b.status === "running").length;
 
   return (
-    <div className="flex flex-col gap-4 h-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <Bot size={18} className="text-brand" />
-          <span className="font-semibold text-text-primary">
+    <div className="dash-bots-panel">
+      <div className="dash-bots-toolbar">
+        <div className="dash-bots-toolbar-left">
+          <Bot size={18} style={{ color: "var(--auth-accent)" }} />
+          <span className="dash-bots-count">
             {bots.length} bot{bots.length !== 1 ? "s" : ""}
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-green-trade/10 text-green-trade border border-green-trade/20">
+          <span className="dash-bots-running-badge">
+            <span className="dash-live-dot" />
             {runningCount} running
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="dash-bots-toolbar-actions">
           <button
             type="button"
             onClick={fetchAll}
-            className="p-2 rounded-lg border border-bg-border hover:bg-bg-secondary text-text-muted transition-colors"
+            className="dash-icon-btn-ghost"
             title="Refresh"
+            aria-label="Refresh bots"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={15} />
           </button>
           <button
             type="button"
             onClick={() => setShowCreate((v) => !v)}
-            className="btn-primary flex items-center gap-1.5 text-sm py-2 px-4"
+            className="dash-btn-primary"
           >
-            <Plus size={14} /> New Bot
+            <Plus size={15} /> New bot
           </button>
         </div>
       </div>
 
       {showCreate && (
-        <div className="card-elevated p-4 sm:p-5 space-y-4 shrink-0 animate-slide-up">
-          <h4 className="font-semibold text-text-primary">Create Trading Bot</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-text-secondary mb-1 block">Bot Name</label>
+        <div className="dash-bots-create">
+          <h4 className="dash-bots-create-title">Create trading bot</h4>
+          <div className="dash-form-grid">
+            <div className="dash-trade-field">
+              <label className="dash-field-label" htmlFor="bot-name">
+                Bot name
+              </label>
               <input
-                className="input-field"
+                id="bot-name"
+                className="dash-input"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="My RSI Bot"
               />
             </div>
-            <div>
-              <label className="text-xs text-text-secondary mb-1 block">Strategy</label>
+            <div className="dash-trade-field">
+              <label className="dash-field-label" htmlFor="bot-strategy">
+                Strategy
+              </label>
               <select
-                className="input-field"
+                id="bot-strategy"
+                className="dash-select"
                 value={formStrategyId ?? ""}
                 onChange={(e) => setFormStrategyId(Number(e.target.value))}
               >
@@ -256,24 +278,30 @@ export function BotPanel() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="text-xs text-text-secondary mb-1 block">Symbol</label>
+            <div className="dash-trade-field">
+              <label className="dash-field-label" htmlFor="bot-symbol">
+                Symbol
+              </label>
               <select
-                className="input-field"
+                id="bot-symbol"
+                className="dash-select"
                 value={formSymbol}
                 onChange={(e) => setFormSymbol(e.target.value)}
               >
                 {TRADING_SYMBOLS.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {s.replace("USDT", "/USDT")}
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="text-xs text-text-secondary mb-1 block">Timeframe</label>
+            <div className="dash-trade-field">
+              <label className="dash-field-label" htmlFor="bot-tf">
+                Timeframe
+              </label>
               <select
-                className="input-field"
+                id="bot-tf"
+                className="dash-select"
                 value={formTimeframe}
                 onChange={(e) => setFormTimeframe(e.target.value)}
               >
@@ -286,62 +314,60 @@ export function BotPanel() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs text-text-muted">Quick:</span>
+          <div className="dash-quick-row">
+            <span className="dash-label">Quick deploy</span>
             {STRATEGY_PRESETS.map((p) => (
               <button
                 key={p.name}
                 type="button"
                 onClick={() => handleQuickCreate(p)}
                 disabled={creating}
-                className="text-xs px-2.5 py-1 rounded-md bg-bg-secondary hover:bg-brand/20 text-text-secondary hover:text-brand border border-bg-border transition-colors disabled:opacity-50"
+                className="dash-quick-chip"
               >
                 {p.name}
               </button>
             ))}
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary"
-            >
+          <div className="dash-form-actions">
+            <button type="button" onClick={() => setShowCreate(false)} className="dash-btn-cancel">
               Cancel
             </button>
             <button
               type="button"
               onClick={handleCreate}
               disabled={creating}
-              className="btn-primary flex items-center gap-2 text-sm disabled:opacity-60"
+              className="dash-btn-primary"
             >
-              {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              Create Bot
+              {creating ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <Plus size={15} />
+              )}
+              Create bot
             </button>
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-auto min-h-0">
+      <div className="dash-bots-list">
         {loading ? (
-          <div className="flex items-center justify-center h-40">
-            <Loader2 size={24} className="animate-spin text-brand" />
+          <div className="dash-bots-loading">
+            <Loader2 size={26} className="animate-spin" />
           </div>
         ) : bots.length === 0 ? (
-          <div className="card">
-            <EmptyState
-              icon={Bot}
-              title="No bots yet"
-              description="Create an RSI or MA Crossover bot to automate your strategy."
-              action={
-                <button type="button" onClick={() => setShowCreate(true)} className="btn-primary text-sm">
-                  Create Your First Bot
-                </button>
-              }
-            />
+          <div className="dash-empty-state">
+            <div className="dash-empty-state-icon">
+              <Bot size={22} />
+            </div>
+            <h4>No bots yet</h4>
+            <p>Create an RSI or MA crossover bot to automate your strategy on a schedule.</p>
+            <button type="button" onClick={() => setShowCreate(true)} className="dash-btn-primary">
+              <Plus size={15} /> Create your first bot
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="dash-bots-grid">
             {bots.map((bot) => {
               const stats = statsMap[bot.id];
               const isRunning = bot.status === "running";
@@ -349,37 +375,37 @@ export function BotPanel() {
               const pnl = stats?.total_pnl ?? bot.total_pnl;
 
               return (
-                <div
+                <article
                   key={bot.id}
-                  className="card-elevated p-4 flex flex-col hover:border-brand/30 transition-colors"
+                  className={cn("dash-bot-card", isRunning && "is-running")}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-semibold text-text-primary truncate">{bot.name}</h4>
-                        <span
-                          className={cn(
-                            "text-[10px] font-bold uppercase px-2 py-0.5 rounded border",
-                            STATUS_COLOR[bot.status] ?? STATUS_COLOR.idle,
-                          )}
-                        >
+                  <div className="dash-bot-card-header">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="dash-bot-card-name">{bot.name}</h4>
+                        <span className={cn("dash-bot-status", statusClass(bot.status))}>
+                          {isRunning && <span className="dash-live-dot" />}
                           {bot.status}
                         </span>
                       </div>
-                      <p className="text-xs text-text-muted mt-1">
-                        {bot.symbol} · {bot.timeframe} · {bot.broker}
+                      <p className="dash-bot-card-meta">
+                        {bot.symbol.replace("USDT", "/USDT")} · {bot.timeframe} · {bot.broker}
                       </p>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="dash-bot-card-actions">
                       {isRunning ? (
                         <button
                           type="button"
                           onClick={() => handleStop(bot.id)}
                           disabled={busy}
                           title="Stop"
-                          className="p-2 rounded-lg bg-red-trade/10 text-red-trade hover:bg-red-trade/20 disabled:opacity-50"
+                          className="dash-bot-action-btn dash-bot-action-btn--stop"
                         >
-                          {busy ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} />}
+                          {busy ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Square size={14} />
+                          )}
                         </button>
                       ) : (
                         <button
@@ -387,9 +413,13 @@ export function BotPanel() {
                           onClick={() => handleStart(bot.id)}
                           disabled={busy}
                           title="Start"
-                          className="p-2 rounded-lg bg-green-trade/10 text-green-trade hover:bg-green-trade/20 disabled:opacity-50"
+                          className="dash-bot-action-btn dash-bot-action-btn--start"
                         >
-                          {busy ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+                          {busy ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Play size={14} />
+                          )}
                         </button>
                       )}
                       <button
@@ -397,46 +427,49 @@ export function BotPanel() {
                         onClick={() => handleDelete(bot.id)}
                         disabled={busy || isRunning}
                         title="Delete"
-                        className="p-2 rounded-lg text-text-muted hover:text-red-trade hover:bg-red-trade/10 disabled:opacity-30"
+                        className="dash-bot-action-btn dash-bot-action-btn--delete"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-auto pt-3 border-t border-bg-border">
+                  <div className="dash-bot-metrics">
                     <div>
-                      <p className="text-[10px] text-text-muted flex items-center gap-0.5">
+                      <p className="dash-bot-metric-label">
                         <TrendingUp size={10} /> P&L
                       </p>
                       <p
                         className={cn(
-                          "text-xs font-mono font-bold",
-                          pnl >= 0 ? "text-green-trade" : "text-red-trade",
+                          "dash-bot-metric-value",
+                          pnl >= 0 ? "is-positive" : "is-negative",
                         )}
                       >
                         {formatSignedCurrency(pnl)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-muted flex items-center gap-0.5">
+                      <p className="dash-bot-metric-label">
                         <Activity size={10} /> Trades
                       </p>
-                      <p className="text-xs font-mono text-text-primary">
+                      <p className="dash-bot-metric-value">
                         {stats?.total_trades ?? bot.total_trades}
-                        <span className="text-text-muted"> · {stats?.win_rate ?? 0}%</span>
+                        <span style={{ color: "var(--auth-muted)", fontWeight: 500 }}>
+                          {" "}
+                          · {stats?.win_rate ?? 0}%
+                        </span>
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-muted flex items-center gap-0.5">
-                        <Clock size={10} /> Last
+                      <p className="dash-bot-metric-label">
+                        <Clock size={10} /> Last run
                       </p>
-                      <p className="text-xs text-text-secondary">
+                      <p className="dash-bot-metric-value" style={{ fontWeight: 500 }}>
                         {bot.last_run_at ? format(new Date(bot.last_run_at), "HH:mm") : "—"}
                       </p>
                     </div>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>

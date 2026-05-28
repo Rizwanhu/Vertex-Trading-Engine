@@ -6,21 +6,26 @@ interface MiniSparklineProps {
   positive?: boolean;
   points?: number;
   className?: string;
-  /** Use login/signup mint accent (#00ffa3) */
   accent?: boolean;
+  size?: "sm" | "md";
 }
 
-/** Decorative trend line for market cards (seeded from direction). */
-export function MiniSparkline({ positive = true, points = 24, className, accent }: MiniSparklineProps) {
+export function MiniSparkline({
+  positive = true,
+  points = 20,
+  className,
+  accent,
+  size = "md",
+}: MiniSparklineProps) {
   const path = useMemo(() => {
-    const w = 72;
-    const h = 28;
+    const w = 56;
+    const h = 20;
     const vals: number[] = [];
-    let v = positive ? 0.35 : 0.65;
+    let v = positive ? 0.4 : 0.6;
     for (let i = 0; i < points; i++) {
-      const wave = Math.sin((i / points) * Math.PI * 2.2) * 0.08;
-      const drift = positive ? i * 0.018 : -i * 0.018;
-      v = Math.max(0.08, Math.min(0.92, v + wave + drift * 0.15));
+      const wave = Math.sin((i / points) * Math.PI * 2) * 0.06;
+      const drift = positive ? 0.012 : -0.012;
+      v = Math.max(0.12, Math.min(0.88, v + wave + drift));
       vals.push(v);
     }
     const coords = vals.map((y, i) => {
@@ -28,31 +33,40 @@ export function MiniSparkline({ positive = true, points = 24, className, accent 
       const py = h - y * h;
       return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${py.toFixed(1)}`;
     });
-    return coords.join(" ");
+    return { line: coords.join(" "), w, h };
   }, [positive, points]);
 
-  const fillPath = `${path} L72,28 L0,28 Z`;
-  const stroke = positive
-    ? accent
-      ? "#00ffa3"
-      : "#10b981"
-    : "#f87171";
-  const fillId = `${accent ? "a" : ""}${positive ? "spark-up" : "spark-down"}`;
+  const fillPath = `${path.line} L${path.w},${path.h} L0,${path.h} Z`;
+  const stroke = positive ? (accent ? "#00ffa3" : "#10b981") : "#f87171";
+  const fillId = `spark-${accent ? "a" : ""}${positive ? "up" : "down"}-${size}`;
 
   return (
     <svg
-      viewBox="0 0 72 28"
-      className={cn("w-[72px] h-7 shrink-0", className)}
+      viewBox={`0 0 ${path.w} ${path.h}`}
+      className={cn(
+        "block w-full h-full",
+        size === "sm" ? "max-w-[56px] max-h-[20px]" : "max-w-[72px] max-h-[28px]",
+        className,
+      )}
+      preserveAspectRatio="none"
       aria-hidden
     >
       <defs>
         <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity="0.35" />
+          <stop offset="0%" stopColor={stroke} stopOpacity="0.2" />
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={fillPath} fill={`url(#${fillId})`} />
-      <path d={path} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={path.line}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }

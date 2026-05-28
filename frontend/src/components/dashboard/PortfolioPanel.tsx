@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { api, Balance, PnL } from "@/lib/api";
-import { formatCurrency, formatSignedCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatSignedCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function PortfolioPanel({ compact }: { compact?: boolean }) {
@@ -30,7 +30,7 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-10">
+      <div className="flex items-center justify-center py-12">
         <Loader2 size={22} className="animate-spin" style={{ color: "var(--auth-accent)" }} />
       </div>
     );
@@ -53,26 +53,18 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <dl className="space-y-0">
-        {rows.map((r, i) => (
-          <div
-            key={r.label}
-            className={cn(
-              "flex justify-between items-baseline gap-3 py-3.5",
-              i < rows.length - 1 && "border-b border-[var(--auth-border)]",
-            )}
-          >
-            <dt className="dash-label !normal-case !tracking-normal text-[0.8125rem]">{r.label}</dt>
-            <dd className="text-right">
+      <dl className="dash-portfolio-list">
+        {rows.map((r) => (
+          <div key={r.label} className="dash-portfolio-row">
+            <dt className="dash-portfolio-label">{r.label}</dt>
+            <dd className="m-0 p-0">
               <span
-                className="font-mono text-sm font-semibold tabular-nums"
+                className="dash-portfolio-value"
                 style={{ color: r.accent ?? "var(--auth-text)" }}
               >
                 {r.value}
               </span>
-              {r.sub && (
-                <p className="text-[10px] text-[var(--auth-muted)] mt-0.5">{r.sub}</p>
-              )}
+              {r.sub && <p className="dash-portfolio-sub">{r.sub}</p>}
             </dd>
           </div>
         ))}
@@ -81,7 +73,7 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 p-1">
       <div className="flex items-center justify-between">
         <h3 className="dash-section-title">Portfolio</h3>
         <button
@@ -92,20 +84,20 @@ export function PortfolioPanel({ compact }: { compact?: boolean }) {
           <RefreshCw size={14} />
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-3">
         {rows.map((r) => (
           <div
             key={r.label}
-            className="p-3.5 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]"
+            className="p-4 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]"
           >
-            <p className="dash-label">{r.label}</p>
+            <p className="dash-portfolio-label">{r.label}</p>
             <p
-              className="font-mono font-bold mt-1.5 tabular-nums text-[var(--auth-text)]"
+              className="dash-portfolio-value mt-2"
               style={{ color: r.accent }}
             >
               {r.value}
             </p>
-            {r.sub && <p className="text-[10px] text-[var(--auth-muted)] mt-1">{r.sub}</p>}
+            {r.sub && <p className="dash-portfolio-sub">{r.sub}</p>}
           </div>
         ))}
       </div>

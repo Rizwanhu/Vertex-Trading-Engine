@@ -72,7 +72,7 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
   };
 
   return (
-    <div className="dash-card dash-card-glow flex flex-col min-h-[440px] overflow-hidden">
+    <div className="dash-card dash-card-glow flex flex-col overflow-hidden">
       <div className="dash-section-head">
         <div>
           <h3 className="dash-section-title">Place order</h3>
@@ -80,14 +80,14 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
             {symbol.replace("USDT", "/USDT")} · {broker}
           </p>
         </div>
-        <div className="text-right px-3 py-2 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]">
+        <div className="dash-trade-price-badge">
           <p className="dash-market-price text-sm">
             {currentPrice > 0 ? formatPrice(currentPrice) : "—"}
           </p>
           {liveTick && (
             <p
               className={cn(
-                "text-xs font-bold font-mono mt-0.5",
+                "text-xs font-bold font-mono mt-1",
                 priceChange >= 0 ? "text-[var(--auth-accent)]" : "text-[#f87171]",
               )}
             >
@@ -97,7 +97,7 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
         </div>
       </div>
 
-      <div className="dash-body flex-1 flex flex-col gap-5 !pt-5">
+      <div className="dash-trade-body">
         <DashSegmented
           options={[
             { value: "market", label: "Market" },
@@ -108,7 +108,7 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
           columns={2}
         />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="dash-side-grid">
           <button
             type="button"
             onClick={() => setSide("buy")}
@@ -125,9 +125,9 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
           </button>
         </div>
 
-        <div className="space-y-4 flex-1">
+        <div className="dash-trade-block">
           {orderType === "limit" && (
-            <div>
+            <div className="dash-trade-field">
               <label className="dash-field-label" htmlFor="limit-price">
                 Limit price (USDT)
               </label>
@@ -143,7 +143,7 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
             </div>
           )}
 
-          <div>
+          <div className="dash-trade-field">
             <label className="dash-field-label" htmlFor="qty">
               Quantity ({symbolBase(symbol)})
             </label>
@@ -156,13 +156,13 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
               step="0.001"
               min="0"
             />
-            <div className="flex gap-1.5 mt-2.5">
+            <div className="dash-pct-row">
               {[["25%", 0.25], ["50%", 0.5], ["75%", 0.75], ["Max", 1]].map(([label, pct]) => (
                 <button
                   key={label as string}
                   type="button"
                   onClick={() => setQuantityPct(pct as number)}
-                  className="flex-1 py-2 text-[10px] font-bold rounded-lg border border-[var(--auth-border)] text-[var(--auth-muted)] hover:text-[var(--auth-accent)] hover:border-[rgba(0,255,163,0.3)] hover:bg-[var(--auth-accent-dim)] transition-all"
+                  className="dash-pct-btn"
                 >
                   {label as string}
                 </button>
@@ -171,10 +171,10 @@ export function TradePanel({ symbol = "BTCUSDT", broker = "binance" }: TradePane
           </div>
         </div>
 
-        <div className="mt-auto pt-5 border-t border-[var(--auth-border)] space-y-4">
-          <div className="flex items-center justify-between p-3.5 rounded-[var(--auth-radius)] bg-[var(--auth-surface-2)] border border-[var(--auth-border)]">
-            <span className="text-sm text-[var(--auth-muted)]">Est. total</span>
-            <span className="font-mono font-semibold text-[var(--auth-text)] tabular-nums">
+        <div className="dash-trade-footer">
+          <div className="dash-trade-est">
+            <span className="dash-trade-est-label">Est. total</span>
+            <span className="dash-trade-est-value">
               ~ {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
             </span>
           </div>
